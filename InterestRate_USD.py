@@ -16,9 +16,9 @@ def Ho_Lee_USD(TMax):
 	drift_args = {}
 	vol_args = {}
 	#theta = np.ones(100) * 0.0
-	theta = np.ones(100) * 0.001
-	x = np.linspace(0,TMax,num=100,endpoint=True)
-	theta = interp1d(x, theta)
+	#theta = np.ones(100) * 0.001
+	#x = np.linspace(0,TMax,num=100,endpoint=True)
+	#theta = interp1d(x, theta)
 	#sigma = 0.015
 	#sigma = 0.0
 	
@@ -35,9 +35,9 @@ def Hull_White_USD(TMax):
 	drift_args = {}
 	vol_args = {}
 	#theta = np.ones(100) * 0.0
-	theta = np.ones(100) * 0.001
-	x = np.linspace(0,TMax,num=100,endpoint=True)
-	theta = interp1d(x, theta)
+	#theta = np.ones(100) * 0.001
+	#x = np.linspace(0,TMax,num=100,endpoint=True)
+	#theta = interp1d(x, theta)
 	#sigma = 0.015
 	#sigma = 0.0
 	

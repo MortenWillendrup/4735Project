@@ -12,10 +12,10 @@ import math
 import matplotlib.pyplot as plt
 
 
-def Stock_drift_calibrate(r_euro, div, rho, vol_arg_Stock, vol_FX, TMax):
+def Stock_drift_calibrate(r_euro, div, rho_XS, vol_arg_Stock, vol_FX, TMax):
 	drift_args = {}
 	def Stock_drift_with_rho(xx,tt):
-		return r_euro - div - rho * vol_FX * vol_arg_Stock['sigma'](xx,tt)
+		return r_euro - div - rho_XS * vol_FX * vol_arg_Stock['sigma'](xx,tt)
 	
 	#drift_args['drift'] = drift
 	drift_args['drift'] = Stock_drift_with_rho
