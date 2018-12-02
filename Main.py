@@ -14,8 +14,26 @@ from scipy.stats import norm
 import os
 
 from InterestRate_USD import Ho_Lee_USD, Hull_White_USD
+from InterestRate_EUR import Ho_Lee_EUR, Hull_White_EUR
+
 from Stock import Stock_drift_calibrate, Stock_vol_calibrate
 from correlation import Correlation_calibrate
+
+def Ho_Lee_drift(drift_arg):
+	def drift(t,r):
+		return drift_arg['theta'](t)
+	return drift
+
+def Ho_Lee_vol(vol_arg):
+	return vol_arg['sigma']
+
+def Hull_White_drift(drift_arg):
+	def drift(t,r):
+		return drift_arg['theta'](t) - drift_arg['a']*r
+	return drift
+
+def Hull_White_vol(vol_arg):
+	return vol_arg['sigma']		
 
 def get_discount(r, delta_t):
 	sum_r = 0.0
@@ -33,8 +51,8 @@ def RungeKutta_simulator(Params):
 	#div = Params['stock']['div']
 	#r_Euro = Params['stock']['r']
 	r0_USD = Params['r_USD']['r0_USD']
-	drift_arg_USD = Params['r_USD']['drift']
-	vol_arg_USD = Params['r_USD']['vol']
+	drift_func_USD = Params['r_USD']['drift']
+	vol_func_USD = Params['r_USD']['vol']
 	libor_simulator =  Params['r_USD']['Libor']
 	#vol_FX = Params['FX']['vol']
 	#rho_XS = Params['corr']['rho_XS']
@@ -47,6 +65,8 @@ def RungeKutta_simulator(Params):
 	L = Params['Monte_Carlo']['L']
 	ensure_positive = Params['Monte_Carlo']['pos']
 	eps = Params['Monte_Carlo']['eps']
+	
+	r_Euro = Params['r_EUR']['series']
 
 	T_init = 0.0
 	N = int((T - T_init) / delta_t)
@@ -65,8 +85,8 @@ def RungeKutta_simulator(Params):
 		Z2 = rho_RS * Z1 + math.sqrt(1-rho_RS**2)*np.random.normal()
 		_t = T_init + delta_t * i
 		time[i] = _t
-		drift_r = drift_arg_USD['theta'](_t)
-		vol_r = vol_arg_USD['sigma']
+		drift_r = drift_func_USD(_t, r[i-1])
+		vol_r = vol_func_USD
 		r[i] = r[i-1] + drift_r * delta_t + vol_r * math.sqrt(delta_t) * Z1 
 		if(ensure_positive and r[i] < 0):
 			r[i] = eps
@@ -74,7 +94,7 @@ def RungeKutta_simulator(Params):
 			Libor = libor_simulator(_t, r[i])
 			if Libor > L:
 				return 0
-		drift_S = drift_arg_stock['drift'](S[i-1],_t)
+		drift_S = drift_arg_stock['drift'](S[i-1],_t, r_Euro[i])
 		vol_S = vol_arg_stock['sigma'](S[i-1],_t)
 		S_tilde = S[i-1] + drift_S * S[i-1] * delta_t + vol_S * S[i-1] * math.sqrt(delta_t)
 		vol_S_tilde = vol_arg_stock['sigma'](S_tilde, _t)
@@ -87,7 +107,23 @@ def RungeKutta_simulator(Params):
 
 	
 def get_prices(num_iter, Params):
+	delta_t = Params['Monte_Carlo']['delta_t']
+	T = Params['Monte_Carlo']['T']
+
+
+	T_init = 0.0
+	N = int((T - T_init) / delta_t)
+	r0_EUR = Params['r_EUR']['r0_EUR']	
+	r_EUR = np.zeros(N+1)
+	r_EUR[0] = r0_EUR
+	for i in range(1,N+1):
+		_t = T_init + delta_t * i
+		drift = Params['r_EUR']['drift'](_t, r_EUR[i-1])
+		#print(drift)
+		r_EUR[i] = r_EUR[i-1] + drift * delta_t
+	Params['r_EUR']['series'] = r_EUR
 	results = np.zeros(num_iter)
+
 	for _it in range(num_iter):
 		results[_it] = RungeKutta_simulator(Params)
 	return results
@@ -127,15 +163,21 @@ if __name__ == "__main__":
 	
 	#drift_arg_USD, vol_arg_USD, libor_simulator = Ho_Lee_USD(T)
 	drift_arg_USD, vol_arg_USD, libor_simulator = Hull_White_USD(T)
-
+	drift_func_USD = Hull_White_drift(drift_arg_USD)
+	vol_func_USD = Hull_White_vol(vol_arg_USD)
+	drift_arg_EUR, vol_arg_EUR = Hull_White_EUR(T)
+	drift_func_EUR = Hull_White_drift(drift_arg_EUR)
+	vol_func_EUR = Hull_White_vol(vol_arg_EUR)
 	
 	#Q0 = 1.13
 	vol_arg_Stock = Stock_vol_calibrate(T)
-	drift_arg_Stock = Stock_drift_calibrate(r0_Euro, q, rho_XS, vol_arg_Stock, vol_FX, T)
+	drift_arg_Stock = Stock_drift_calibrate(q, rho_XS, vol_arg_Stock, vol_FX, T)
 	
 	Params = {}
 	Params['stock'] = {'vol':vol_arg_Stock, 'drift':drift_arg_Stock, 'S0':S0, 'div':q, 'r':r0_Euro}
-	Params['r_USD'] = {'r0_USD':r0_USD, 'drift':drift_arg_USD, 'vol': vol_arg_USD,'Libor':libor_simulator}
+	Params['r_USD'] = {'r0_USD':r0_USD, 'drift':drift_func_USD, 'vol': vol_func_USD,'Libor':libor_simulator}
+	Params['r_EUR'] = {'r0_EUR':r0_Euro, 'drift':drift_func_EUR, 'vol': vol_func_EUR}
+
 	Params['FX'] = {'vol':vol_FX}
 	Params['corr'] = {'rho_XS':rho_XS, 'rho_RS':rho_RS}
 	Params['Monte_Carlo'] = {'T':T, 'T1':T1, 'delta_t':delta_t, 'num_iter':num_iter, 'K':K, 'L':L, 'pos':ensure_positive, 'eps':eps}
