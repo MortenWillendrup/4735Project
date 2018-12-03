@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 def Stock_drift_calibrate(div, rho_XS, vol_arg_Stock, vol_FX, TMax):
 	drift_args = {}
 	def Stock_drift_with_rho(xx,tt, r_euro):
-		return r_euro - div - rho_XS * vol_FX * vol_arg_Stock['sigma'](xx,tt)
+		return r_euro - div - rho_XS * vol_FX * vol_arg_Stock['sigma'](xx,tt, r_euro)
 	
 	#drift_args['drift'] = drift
 	drift_args['drift'] = Stock_drift_with_rho
@@ -23,12 +23,12 @@ def Stock_drift_calibrate(div, rho_XS, vol_arg_Stock, vol_FX, TMax):
 	
 def Stock_vol_calibrate(TMax):
 	vol_args = {}
-	t = np.linspace(0,TMax,num=10,endpoint=True)
-	x = np.linspace(2000, 4000, num=10, endpoint=True)
-	tt,xx = np.meshgrid(t,x)
+	#t = np.linspace(0,TMax,num=10,endpoint=True)
+	#x = np.linspace(2000, 4000, num=10, endpoint=True)
+	#tt,xx = np.meshgrid(t,x)
 	#sigma = tt+xx
-	sigma = np.ones(tt.shape) * 0.2
-	sigma = interp2d(t,x,sigma)
+	#sigma = np.ones(tt.shape) * 0.2
+	#sigma = interp2d(t,x,sigma)
 	sc = Stock_calibrate()
 	sigma = sc.sigma
 	vol_args['sigma'] = sigma
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 	#drift_arg = {}
 	#vol_arg = {}
 	vol_arg_stock = Stock_vol_calibrate(T)
-	drift_arg_stock = Stock_drift_calibrate(r_euro, div, rho, vol_arg_stock, vol_FX, T)
+	drift_arg_stock = Stock_drift_calibrate(div, rho, vol_arg_stock, vol_FX, T)
 
 	for i in range(1,N+1):
 		_t = T_init + delta_t * i
@@ -62,12 +62,12 @@ if __name__ == "__main__":
 		#drift_arg['x'] = r_lst[i-1]
 		#vol_arg['t'] = _t
 		#vol_arg['x'] = r_lst[i-1]
-		drift = drift_arg_stock['drift'](x[i-1],_t)
+		drift = drift_arg_stock['drift'](x[i-1],_t, r_euro)
 		#print(drift)
-		vol = vol_arg_stock['sigma'](x[i-1],_t)
+		vol = vol_arg_stock['sigma'](x[i-1],_t, r_euro)
 		#print(vol)
 		x_tilde = x[i-1] + drift * x[i-1] * delta_t + vol * x[i-1] * math.sqrt(delta_t)
-		vol_tilde = vol_arg_stock['sigma'](x_tilde, _t)
+		vol_tilde = vol_arg_stock['sigma'](x_tilde, _t, r_euro)
 		Z = np.random.normal()
 		x[i] = x[i-1] + drift * x[i-1] * delta_t + vol * x[i-1] * math.sqrt(delta_t) * Z \
 			+ 0.5 * (vol_tilde * x_tilde - vol  * x[i-1]) * math.sqrt(delta_t) * (Z**2 - 1)

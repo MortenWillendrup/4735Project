@@ -46,8 +46,8 @@ class Stock_calibrate:
 		K = np.array(self.df_all.index).reshape((1,-1))
 		T = np.array(self.df_all.columns).reshape((-1,1))
 		self.call_interpolate = interpolate.interp2d(K,T,call,'quintic')
-		df_gen = pd.read_csv(os.path.join("data", "General.csv"), index_col=0)
-		self.r = float(df_gen.loc['r_Euro'])
+		#df_gen = pd.read_csv(os.path.join("data", "General.csv"), index_col=0)
+		#self.r = float(df_gen.loc['r_Euro'])
 		df_stock_stats = pd.read_csv(os.path.join("data", "Stock.csv"), index_col=0, header=None)
 		spot_str = df_stock_stats.loc['Price'].squeeze()
 		self.spot = float(spot_str)
@@ -72,13 +72,13 @@ class Stock_calibrate:
 		ax = plt.axes(projection='3d')
 		ax.contour3D(XX, YY, Z, 50, cmap='binary')
 		plt.show()
-	def local_vol(self, K, T):
+	def local_vol(self, K, T, r):
 		
 		dCdT = partial_derivative(self.call_interpolate, 1 ,[K, T], dx=1e-4) 
 		dCdK = partial_derivative(self.call_interpolate, 0, [K, T], dx=10) 
 		d2CdK2 = partial_derivative(self.call_interpolate, 0, [K, T],2, dx=10) 
 		C = self.call_interpolate(K,T)
-		sig2 = 2 * (dCdT + self.div * C + (self.r-self.div)*K*dCdK)/(K**2*d2CdK2)
+		sig2 = 2 * (dCdT + self.div * C + (r-self.div)*K*dCdK)/(K**2*d2CdK2)
 		#return 0
 		if sig2 > 0 and sig2 < 0.5**2:
 			return math.sqrt(sig2)
@@ -86,7 +86,7 @@ class Stock_calibrate:
 			return 0.01
 			#return self.bs_sigma
 		else:
-			return BS_vol(self.spot, K, C, self.r, self.div, T)[0]
+			return BS_vol(self.spot, K, C, r, self.div, T)[0]
 			#return self.bs_sigma
 
 
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 	Z = np.zeros((N,N))
 	for i in range(0,N):
 		for j in range(0,N):
-			Z[i,j] = sc.local_vol(X[i],Y[j])
+			Z[i,j] = sc.local_vol(X[i],Y[j], -0.37/100)
 
 
 	fig = plt.figure()

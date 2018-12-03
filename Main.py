@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 from scipy.stats import norm
 import os
+from scipy import interpolate
+
 
 from InterestRate_USD import Ho_Lee_USD, Hull_White_USD
 from InterestRate_EUR import Ho_Lee_EUR, Hull_White_EUR
@@ -66,12 +68,12 @@ def RungeKutta_simulator(Params):
 	ensure_positive = Params['Monte_Carlo']['pos']
 	eps = Params['Monte_Carlo']['eps']
 	
-	r_Euro = Params['r_EUR']['series']
+	r_Euro = Params['r_EUR']['interp']
 
 	T_init = 0.0
 	N = int((T - T_init) / delta_t)
-	r = np.zeros(N+1)
-	r[0] = r0_USD
+	r_USD = np.zeros(N+1)
+	r_USD[0] = r0_USD
 	S = np.zeros(N+1)
 	S[0] = S0
 	N1 = int((T1 - T_init)/delta_t)
@@ -84,44 +86,31 @@ def RungeKutta_simulator(Params):
 		Z1 = np.random.normal()
 		Z2 = rho_RS * Z1 + math.sqrt(1-rho_RS**2)*np.random.normal()
 		_t = T_init + delta_t * i
+		r_Euro_t = r_Euro(_t)
 		time[i] = _t
-		drift_r = drift_func_USD(_t, r[i-1])
+		drift_r = drift_func_USD(_t, r_USD[i-1])
 		vol_r = vol_func_USD
-		r[i] = r[i-1] + drift_r * delta_t + vol_r * math.sqrt(delta_t) * Z1 
-		if(ensure_positive and r[i] < 0):
-			r[i] = eps
+		r_USD[i] = r_USD[i-1] + drift_r * delta_t + vol_r * math.sqrt(delta_t) * Z1 
+		if(ensure_positive and r_USD[i] < 0):
+			r_USD[i] = eps
 		if(i == N1):
-			Libor = libor_simulator(_t, r[i])
+			Libor = libor_simulator(_t, r_USD[i])
 			if Libor > L:
 				return 0
-		drift_S = drift_arg_stock['drift'](S[i-1],_t, r_Euro[i])
-		vol_S = vol_arg_stock['sigma'](S[i-1],_t)
+		drift_S = drift_arg_stock['drift'](S[i-1],_t, r_Euro_t)
+		vol_S = vol_arg_stock['sigma'](S[i-1],_t, r_Euro_t)
 		S_tilde = S[i-1] + drift_S * S[i-1] * delta_t + vol_S * S[i-1] * math.sqrt(delta_t)
-		vol_S_tilde = vol_arg_stock['sigma'](S_tilde, _t)
+		vol_S_tilde = vol_arg_stock['sigma'](S_tilde, _t, r_Euro_t)
 		S[i] = S[i-1] + drift_S * S[i-1] * delta_t + vol_S * S[i-1] * math.sqrt(delta_t) * Z2 \
 			+ 0.5 * (vol_S_tilde * S_tilde - vol_S  * S[i-1]) * math.sqrt(delta_t) * (Z2**2 - 1)		
 	payoff = max(0, S[N]-K)
-	discount = get_discount(r,delta_t)
+	discount = get_discount(r_USD,delta_t)
 	return discount*payoff
 	
 
 	
 def get_prices(num_iter, Params):
-	delta_t = Params['Monte_Carlo']['delta_t']
-	T = Params['Monte_Carlo']['T']
 
-
-	T_init = 0.0
-	N = int((T - T_init) / delta_t)
-	r0_EUR = Params['r_EUR']['r0_EUR']	
-	r_EUR = np.zeros(N+1)
-	r_EUR[0] = r0_EUR
-	for i in range(1,N+1):
-		_t = T_init + delta_t * i
-		drift = Params['r_EUR']['drift'](_t, r_EUR[i-1])
-		#print(drift)
-		r_EUR[i] = r_EUR[i-1] + drift * delta_t
-	Params['r_EUR']['series'] = r_EUR
 	results = np.zeros(num_iter)
 
 	for _it in range(num_iter):
@@ -181,7 +170,25 @@ if __name__ == "__main__":
 	Params['FX'] = {'vol':vol_FX}
 	Params['corr'] = {'rho_XS':rho_XS, 'rho_RS':rho_RS}
 	Params['Monte_Carlo'] = {'T':T, 'T1':T1, 'delta_t':delta_t, 'num_iter':num_iter, 'K':K, 'L':L, 'pos':ensure_positive, 'eps':eps}
+	delta_t = Params['Monte_Carlo']['delta_t']
 
+	# get determinstic Euro short rate
+	T_init = 0.0
+	N = int((T - T_init) / delta_t)
+	r0_EUR = Params['r_EUR']['r0_EUR']	
+	r_EUR = np.zeros(N+1)
+	r_EUR[0] = r0_EUR
+	time = np.zeros(N+1)
+	time[0] = T_init
+	for i in range(1,N+1):
+		_t = T_init + delta_t * i
+		time[i] = _t
+		drift = Params['r_EUR']['drift'](_t, r_EUR[i-1])
+		#print(drift)
+		r_EUR[i] = r_EUR[i-1] + drift * delta_t
+	r_EUR_interp = interpolate.interp1d(time, r_EUR, 'linear', fill_value='extrapolate')
+
+	Params['r_EUR']['interp'] = r_EUR_interp
 		
 	prices = get_prices(num_iter, Params)
 	print("mean:" ,np.mean(prices))
