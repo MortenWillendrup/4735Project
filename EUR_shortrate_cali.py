@@ -26,13 +26,13 @@ class REUR_calibrate:
 		self.delta = 0.25
 		self.sigma = 0.0
 		
-	def USD_bond_price(self,T):
+	def EUR_bond_price(self,T):
 		T_yield = self.yields_interp(T)
 		price = (1+T_yield/100)**(-T)
 		return price
 
-	def USD_forward_rate(self,T):
-		return derivative(lambda x:-np.log(self.USD_bond_price(x)), T, dx=self.dx)
+	def EUR_forward_rate(self,T):
+		return derivative(lambda x:-np.log(self.EUR_bond_price(x)), T, dx=self.dx)
 	
 
 class HoLee_calibrate_EUR(REUR_calibrate):
@@ -43,7 +43,7 @@ class HoLee_calibrate_EUR(REUR_calibrate):
 		self.theta = self.theta_HL
 		
 	def theta_HL(self,t):
-		return derivative(lambda x:-np.log(self.USD_bond_price(x)), t, dx=self.dx, n=2, order = 3) + t*self.sigma**2
+		return derivative(lambda x:-np.log(self.EUR_bond_price(x)), t, dx=self.dx, n=2, order = 3) + t*self.sigma**2
 
 	
 class HullWhite_calibrate_EUR(REUR_calibrate):
@@ -59,16 +59,16 @@ class HullWhite_calibrate_EUR(REUR_calibrate):
 		return self.sigma**2/2 * self.B_HW(T)**2
 	
 	def theta_HW(self, t):
-		first = derivative(lambda x:-np.log(self.USD_bond_price(x)), t, dx=self.dx, n=2)
+		first = derivative(lambda x:-np.log(self.EUR_bond_price(x)), t, dx=self.dx, n=2)
 		second = derivative(lambda x:self.g_HW(x), t, dx=self.dx, n=1)
-		third = self.a * (derivative(lambda x:-np.log(self.USD_bond_price(x)), t, dx=self.dx, n=1, order=3) + self.g_HW(t))
+		third = self.a * (derivative(lambda x:-np.log(self.EUR_bond_price(x)), t, dx=self.dx, n=1, order=3) + self.g_HW(t))
 		return first+second+third
 		
 		
 if __name__ == "__main__":
 	clb = HoLee_calibrate_EUR()
 	tt = np.linspace(0,30,300)
-	plt.plot(tt, clb.USD_bond_price(tt))
+	plt.plot(tt, clb.EUR_bond_price(tt))
 	plt.title("EUR bond price")
 	plt.show()
 	delta = 0.25
@@ -77,7 +77,7 @@ if __name__ == "__main__":
 	forwards = np.zeros(len(tt))
 	for i in range(0,len(tt)):
 		t1 = tt[i]
-		forwards[i] = clb.USD_forward_rate(t1)
+		forwards[i] = clb.EUR_forward_rate(t1)
 	plt.plot(tt, forwards)
 	plt.title("forwards")
 	plt.show()
