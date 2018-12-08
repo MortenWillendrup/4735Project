@@ -18,26 +18,43 @@ from scipy import interpolate
 from InterestRate_USD import Ho_Lee_USD, Hull_White_USD
 from InterestRate_EUR import Ho_Lee_EUR, Hull_White_EUR
 
-from Stock import Stock_drift_calibrate, Stock_vol_calibrate
+from Stock_LV import Stock_drift_calibrate_LV, Stock_vol_calibrate_LV
 from correlation import Correlation_calibrate
 
 def Ho_Lee_drift(drift_arg):
+	"""
+	return a function that takes in t and r_t to get the drift of short rate at time t, under HoLee
+	"""
 	def drift(t,r):
 		return drift_arg['theta'](t)
 	return drift
 
 def Ho_Lee_vol(vol_arg):
+	"""
+	return a function that takes in t and r_t to get the vol of short rate at time t, under HoLee
+	"""
 	return vol_arg['sigma']
 
 def Hull_White_drift(drift_arg):
+	"""
+	return a function that takes in t and r_t to get the drift of short rate at time t, under HullWhite
+	"""
 	def drift(t,r):
 		return drift_arg['theta'](t) - drift_arg['a']*r
 	return drift
 
 def Hull_White_vol(vol_arg):
+	"""
+	return a function that takes in t and r_t to get the vol of short rate at time t, under HullWhite
+	"""
 	return vol_arg['sigma']		
 
 def get_discount(r, delta_t):
+	"""
+	Given short rate along the path, calculates the discount factor 
+	r: array of short rates (simulated)
+	delta_t: time spacing between r_t and r_t-1
+	"""
 	sum_r = 0.0
 	for i in range(0, len(r)):
 		if i == 0 or i == len(r)-1:
@@ -47,19 +64,17 @@ def get_discount(r, delta_t):
 	return np.exp(-sum_r*delta_t)
 
 def RungeKutta_simulator(Params):
+	"""
+	RungeKutta simulator for simulating the price of the derivative
+	"""
 	vol_arg_stock = Params['stock']['vol']
 	drift_arg_stock = Params['stock']['drift']
 	S0 = Params['stock']['S0']
-	#div = Params['stock']['div']
-	#r_Euro = Params['stock']['r']
 	r0_USD = Params['r_USD']['r0_USD']
 	drift_func_USD = Params['r_USD']['drift']
 	vol_func_USD = Params['r_USD']['vol']
 	libor_simulator =  Params['r_USD']['Libor']
-	#vol_FX = Params['FX']['vol']
-	#rho_XS = Params['corr']['rho_XS']
 	rho_RS = Params['corr']['rho_RS']
-	#num_iter = Params['Monte_Carlo']['num_iter']
 	delta_t = Params['Monte_Carlo']['delta_t']
 	T = Params['Monte_Carlo']['T']
 	T1 = Params['Monte_Carlo']['T1']
@@ -110,7 +125,10 @@ def RungeKutta_simulator(Params):
 
 	
 def get_prices(num_iter, Params):
-
+	"""
+	Run Monte Carlo num_iter of times, given the Params
+	Return the result for each interation
+	"""
 	results = np.zeros(num_iter)
 
 	for _it in range(num_iter):
@@ -124,9 +142,11 @@ if __name__ == "__main__":
 	L = 0.026
 	T1 = 0.5
 	T = 1.0
+	short_rate_model = "HullWhite" # "HullWhite" or "HoLee"
+	stock_vol_model = "LV" # "BS" or "LV"
 	
 	# parameters for MonteCarlo
-	num_iter = 500
+	num_iter = 5000
 	delta_t = 0.1
 	ensure_positive = True
 	eps = 1e-8
@@ -149,19 +169,32 @@ if __name__ == "__main__":
 	rho_RS = corr_calib.rho_RS #R stands for US short rate
 	vol_FX = corr_calib.vol_FX
 	
-	
-	#drift_arg_USD, vol_arg_USD, libor_simulator = Ho_Lee_USD(T)
-	drift_arg_USD, vol_arg_USD, libor_simulator = Hull_White_USD(T)
-	drift_func_USD = Hull_White_drift(drift_arg_USD)
-	vol_func_USD = Hull_White_vol(vol_arg_USD)
-	drift_arg_EUR, vol_arg_EUR = Hull_White_EUR(T)
-	drift_func_EUR = Hull_White_drift(drift_arg_EUR)
-	vol_func_EUR = Hull_White_vol(vol_arg_EUR)
-	
+	if short_rate_model == "HullWhite":
+		drift_arg_USD, vol_arg_USD, libor_simulator = Hull_White_USD()
+		drift_func_USD = Hull_White_drift(drift_arg_USD)
+		vol_func_USD = Hull_White_vol(vol_arg_USD)
+		drift_arg_EUR, vol_arg_EUR = Hull_White_EUR()
+		drift_func_EUR = Hull_White_drift(drift_arg_EUR)
+		vol_func_EUR = Hull_White_vol(vol_arg_EUR)
+	elif short_rate_model == "HoLee":
+		drift_arg_USD, vol_arg_USD, libor_simulator = Ho_Lee_USD()
+		drift_func_USD = Ho_Lee_drift(drift_arg_USD)
+		vol_func_USD = Ho_Lee_vol(vol_arg_USD)
+		drift_arg_EUR, vol_arg_EUR = Ho_Lee_EUR()
+		drift_func_EUR = Ho_Lee_drift(drift_arg_EUR)
+		vol_func_EUR = Ho_Lee_vol(vol_arg_EUR)
+	else:
+		raise Exception("Unrecognized short rate model: " + str(short_rate_model) + " , should be one of HullWhite and HoLee")
 	#Q0 = 1.13
-	vol_arg_Stock = Stock_vol_calibrate(T)
-	drift_arg_Stock = Stock_drift_calibrate(q, rho_XS, vol_arg_Stock, vol_FX, T)
-	
+	if stock_vol_model == "LV":
+		print("Warning: SVI for Local vol model is not implemented, currently only using numerical interpolation of the call surface. It is recommended to change stock_vol_model to \"BS\"")
+		vol_arg_Stock = Stock_vol_calibrate_LV()
+		drift_arg_Stock = Stock_drift_calibrate_LV(q, rho_XS, vol_arg_Stock, vol_FX)
+	elif stock_vol_model == "BS":
+		raise Exception("Will Do Black Scholes")
+	else:
+		raise Exception("Unrecognized stock vol model: " + str(stock_vol_model) + " , should be one of LV and BS")
+
 	Params = {}
 	Params['stock'] = {'vol':vol_arg_Stock, 'drift':drift_arg_Stock, 'S0':S0, 'div':q, 'r':r0_Euro}
 	Params['r_USD'] = {'r0_USD':r0_USD, 'drift':drift_func_USD, 'vol': vol_func_USD,'Libor':libor_simulator}

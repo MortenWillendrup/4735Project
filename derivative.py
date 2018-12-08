@@ -13,6 +13,15 @@ def f(x,y):
 	return x**2 - np.sin(y)
 	
 def partial_derivative(func, var=0, point=[], n=1, dx=1e-4):
+    """
+	func: a callable function
+	var: integer, with which argument to take partial derivative 
+		e.g. if var = 0, then take partial derivative w.r.t first argument
+			if var = 1, then take partial derivative w.r.t second argument
+	point: point at which the partial derivative is estimated
+	n: order of derivative
+	dx: spacing, float
+    """
     args = point[:]
     def wraps(x):
         args[var] = x

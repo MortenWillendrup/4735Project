@@ -16,27 +16,26 @@ from scipy.stats import norm
 from scipy import optimize
 import math
 from mpl_toolkits.mplot3d import Axes3D
-
-def BS(sig, S, K, r, q, T):
-	d1 = (np.log(S/K)+(r-q+0.5*sig**2)*T)/sig/np.sqrt(T)
-	d2 = d1 - sig*np.sqrt(T)
-	Nd1 = norm.cdf(d1)
-	Nd2 = norm.cdf(d2)
-	call = S*np.exp(-q*T)*Nd1 - K * np.exp(-r*T) * Nd2
-	return call
-
-
-def BS_vol(S, K, C, r, q, T):
-	sol = optimize.root(lambda x: BS(x, S, K, r, q, T)-C, 0.10, method='hybr')	
-	return sol.x
 	
-class Stock_calibrate:
+class Stock_calibrate_LV:
+	"""
+	Local Vol model calibration, assuming deterministic short rates and constant dividend
+	"""
 	def __init__(self):
+		"""
+		1. Read available european call data and interpolate.
+		2. Read relevant stock data (S0, q)
+		3. Compute local vol using Dupire Formula. 
+		4. self.simga is a function that takes in (S_t,t,r_t)
+		"""
+		
 		df_s = pd.read_csv(os.path.join("data","StockCall_shortterm.csv"),index_col=0)
 		df_m = pd.read_csv(os.path.join("data","StockCall_midterm.csv"),index_col=0)
 		df_l = pd.read_csv(os.path.join("data","StockCall_longterm.csv"),index_col=0)
 		df_all = pd.concat([df_s, df_m, df_l], axis=1)
 		df_all.columns = df_all.columns.astype(int)
+		
+		#self.df_all_discrete = df_all.copy()
 
 		df_all.loc[4300,933] = 10.5
 		df_all.loc[4400,933] = 8		
@@ -53,32 +52,38 @@ class Stock_calibrate:
 		self.spot = float(spot_str)
 		div_str = df_stock_stats.loc['div'].squeeze()
 		self.div = float(div_str.strip("%"))/100
-		bs_sigma_str = df_stock_stats.loc['sigma'].squeeze()
-		self.bs_sigma = float(bs_sigma_str.strip("%"))/100
+		#bs_sigma_str = df_stock_stats.loc['sigma'].squeeze()
+		#self.bs_sigma = float(bs_sigma_str.strip("%"))/100
 		self.sigma = self.local_vol
-		KK, TT = np.meshgrid(K.squeeze(),T.squeeze())
-		X = np.linspace(2000,4400,20)
-		Y = np.linspace(0.05,10,20)
-		XX,YY = np.meshgrid(X,Y)
-		Z = self.call_interpolate(X,Y)
-		
-		fig = plt.figure()
-		ax = plt.axes(projection='3d')
-		ax.contour3D(KK, TT, call, 50, cmap='binary')
-		plt.show()
-
-
-		fig = plt.figure()
-		ax = plt.axes(projection='3d')
-		ax.contour3D(XX, YY, Z, 50, cmap='binary')
-		plt.show()
-	def local_vol(self, K, T, r):
-		
-		dCdT = partial_derivative(self.call_interpolate, 1 ,[K, T], dx=1e-4) 
-		dCdK = partial_derivative(self.call_interpolate, 0, [K, T], dx=10) 
-		d2CdK2 = partial_derivative(self.call_interpolate, 0, [K, T],2, dx=10) 
-		C = self.call_interpolate(K,T)
-		sig2 = 2 * (dCdT + self.div * C + (r-self.div)*K*dCdK)/(K**2*d2CdK2)
+#==============================================================================
+# 		KK, TT = np.meshgrid(K.squeeze(),T.squeeze())
+# 		X = np.linspace(2000,4400,20)
+# 		Y = np.linspace(0.05,10,20)
+# 		XX,YY = np.meshgrid(X,Y)
+# 		Z = self.call_interpolate(X,Y)
+# 		
+# 		fig = plt.figure()
+# 		ax = plt.axes(projection='3d')
+# 		ax.contour3D(KK, TT, call, 50, cmap='binary')
+# 		plt.show()
+# 
+# 
+# 		fig = plt.figure()
+# 		ax = plt.axes(projection='3d')
+# 		ax.contour3D(XX, YY, Z, 50, cmap='binary')
+# 		plt.show()
+#==============================================================================
+	def local_vol(self, S, T, r):
+		"""
+		Compute local vol given S_t, t, and r_t using Dupire formula 
+		assuming nonconstant but deterministic short rate		
+		"""
+		#return 0.15
+		dCdT = partial_derivative(self.call_interpolate, 1 ,[S, T], dx=1e-4) 
+		dCdK = partial_derivative(self.call_interpolate, 0, [S, T], dx=10) 
+		d2CdK2 = partial_derivative(self.call_interpolate, 0, [S, T],2, dx=10) 
+		C = self.call_interpolate(S,T)
+		sig2 = 2 * (dCdT + self.div * C + (r-self.div)*S*dCdK)/(S**2*d2CdK2)
 		#return 0
 		if sig2 > 0 and sig2 < 0.5**2:
 			return math.sqrt(sig2)
@@ -86,17 +91,17 @@ class Stock_calibrate:
 			return 0.01
 			#return self.bs_sigma
 		else:
-			return BS_vol(self.spot, K, C, r, self.div, T)[0]
+			return 0.6
 			#return self.bs_sigma
 
 
 if __name__ == "__main__":
-	sc = Stock_calibrate()
+	sc = Stock_calibrate_LV()
 	df = sc.df_all
 	#print(sc.local_vol(4000,0.6))
 	
-	N = 30
-	X = np.linspace(2500,3500,N)
+	N = 10
+	X = np.linspace(2500,4000,N)
 	Y = np.linspace(0.1,2,N)
 	XX,YY = np.meshgrid(X,Y)
 	Z = np.zeros((N,N))

@@ -10,6 +10,11 @@ import pandas as pd
 import os
 
 class Correlation_calibrate:
+	"""
+	Estiamte the correlation between FX and stock return, rho_XS
+	correlation between US short rate and stock return, rho_RS
+	and volatility of FX, vol_FX
+	"""
 	def __init__(self):
 		df_FX = pd.read_csv(os.path.join("data","DEXUSEU.csv"), index_col=0, parse_dates=[0], na_values=["."])
 		df_FX['FX_log_ret'] = np.log(df_FX.DEXUSEU) - np.log(df_FX.DEXUSEU.shift(1))

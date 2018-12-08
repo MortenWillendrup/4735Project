@@ -15,7 +15,17 @@ from scipy.stats import norm
 from scipy import optimize
 
 class RUSD_calibrate:
+	"""
+	Base class for HoLee class and HullWhite class
+	"""
 	def __init__(self):
+		"""
+		1. Read US yield data and interpolate
+		2. read US Libor data and cap data
+		For cap data, we view it as the sum of multiple caplets
+		For instance, for 1-year cap we view it as the sum of 4 caplets, thus 4 bond put
+		we solve for 'sigma' to match that cap price.
+		"""
 		self.dx = 1e-2
 		self.df_Yield = pd.read_csv(os.path.join("data","USYield.csv"),
 					header = None, delimiter = ",", index_col=0)
@@ -34,15 +44,24 @@ class RUSD_calibrate:
 		self.price_cap = self.df_cap.iloc[0,0]/100.0
 		
 	def USD_bond_price(self,T):
+		"""
+		USD treasury bond price with maturity T
+		"""
 		T_yield = self.yields_interp(T)
 		price = (1+T_yield/100)**(-T)
 		return price
 
 	def USD_forward_rate(self,T):
+		"""
+		USD instantaneous forward rate at time T, estimated at time 0	
+		"""
 		return derivative(lambda x:-np.log(self.USD_bond_price(x)), T, dx=self.dx)
 	
 
 class HoLee_calibrate(RUSD_calibrate):
+	"""
+	HoLee calibrate, extending RUSD_calibrate
+	"""
 	def __init__(self):
 		RUSD_calibrate.__init__(self)
 		T_test = 1.0
@@ -52,7 +71,12 @@ class HoLee_calibrate(RUSD_calibrate):
 		self.theta = self.theta_HL
 		
 	def caplet_from_sigma_HL(self,sigma, t1):
-
+		"""		
+		calculate caplet price using black formula
+		sigma and t1 given
+		t2 = t1 + delta (e.g. 3 month)
+		strike = self.K_cap
+		"""
 		coef = (1+self.K_cap)/self.delta
 		strike = 1.0/(1+self.K_cap)
 		t2 = t1+self.delta
@@ -70,21 +94,34 @@ class HoLee_calibrate(RUSD_calibrate):
 		return put * coef
 		
 	def cap_from_sigma_HL(self,sigma, T):
+		"""
+		Calculate cap price by adding 4 caplets prices
+		sigma and T given
+		"""
 		tt = np.linspace(0.0,float(T)-self.delta,int(float(T)//self.delta))
 		cap_price = 0
 		for t1 in tt:
 			cap_price += self.caplet_from_sigma_HL(sigma, t1)
 		return cap_price	
 	def calib_sigma_HL(self,T_test):
+		"""
+		solve for sigma by matching cap market price
+		"""
 		sol = optimize.root(lambda x:self.cap_from_sigma_HL(x, T_test)-self.price_cap, 0.02, method='hybr')	
 		print("HoLee sigma:",sol.x)
 		sigma_HL = sol.x
 		return sigma_HL
 		
 	def theta_HL(self,t):
+		"""
+		After getting sigma, we can get theta following Bjork
+		"""
 		return derivative(lambda x:-np.log(self.USD_bond_price(x)), t, dx=self.dx, n=2, order = 3) + t*self.sigma**2
 
 	def Libor(self, t, r, delta=0.25):
+		"""
+		given t, r_t, we can simulate Libor(t,t,t+delta) as in Bjork
+		"""
 		T = t+delta
 		first = self.USD_bond_price(T)/self.USD_bond_price(t)
 		second = np.exp(delta*self.USD_forward_rate(t) - self.sigma**2/2*t*delta**2-delta*r)
@@ -92,6 +129,9 @@ class HoLee_calibrate(RUSD_calibrate):
 		return (1-P)/(delta*P)
 		
 class HullWhite_calibrate(RUSD_calibrate):
+	"""
+	HullWhite calibrate, extending RUSD_calibrate
+	"""
 	def __init__(self):
 		RUSD_calibrate.__init__(self)	
 		self.a = 0.03
@@ -101,6 +141,12 @@ class HullWhite_calibrate(RUSD_calibrate):
 		self.theta = self.theta_HW
 		
 	def caplet_from_sigma_HW(self, sigma, t1):
+		"""		
+		calculate caplet price using black formula
+		sigma and t1 given
+		t2 = t1 + delta (e.g. 3 month)
+		strike = self.K_cap
+		"""
 		coef = (1+self.K_cap)/self.delta
 		strike = 1.0/(1+self.K_cap)
 		t2 = t1+self.delta
@@ -117,30 +163,49 @@ class HullWhite_calibrate(RUSD_calibrate):
 		return put * coef
 		
 	def cap_from_sigma_HW(self, sigma, T):
+		"""
+		Calculate cap price by adding 4 caplets prices
+		sigma and T given
+		"""
 		tt = np.linspace(0.0,float(T)-self.delta,int(float(T)//self.delta))
 		cap_price = 0
 		for t1 in tt:
 			cap_price += self.caplet_from_sigma_HW(sigma, t1)
 		return cap_price
 	def calib_sigma_HW(self, T_test):
+		"""
+		solve for sigma by matching cap market price
+		"""
 		sol = optimize.root(lambda x:self.cap_from_sigma_HW(x, T_test)-self.price_cap, 0.2, method='hybr')	
 		print("HullWhite sigma:",sol.x)
 		sigma_HW = sol.x
 		return sigma_HW
 		
 	def B_HW(self,T, t=0):
+		"""
+		As in Bjork
+		"""
 		return (1.0/self.a)*(1-np.exp(-self.a*(T-t)))
 	
 	def g_HW(self, T):
+		"""
+		As in Bjork
+		"""
 		return self.sigma**2/2 * self.B_HW(T)**2
 	
 	def theta_HW(self, t):
+		"""
+		After getting sigma, we can get theta following Bjork
+		"""
 		first = derivative(lambda x:-np.log(self.USD_bond_price(x)), t, dx=self.dx, n=2)
 		second = derivative(lambda x:self.g_HW(x), t, dx=self.dx, n=1)
 		third = self.a * (derivative(lambda x:-np.log(self.USD_bond_price(x)), t, dx=self.dx, n=1, order=3) + self.g_HW(t))
 		return first+second+third
 		
 	def Libor(self, t, r, delta=0.25):
+		"""
+		given t, r_t, we can simulate Libor(t,t,t+delta) as in Bjork
+		"""
 		T = t+delta
 		B = self.B_HW(T,t)
 		first = self.USD_bond_price(T)/self.USD_bond_price(t)

@@ -12,15 +12,16 @@ import math
 import matplotlib.pyplot as plt
 
 # Ho-Lee
-def Ho_Lee_USD(TMax):
+def Ho_Lee_USD():
+	"""
+	Return drift args, vol args, and libor simulator under HoLee Model
+	drift_args: drft_args['theta'] is a function that takes in t as an argument, calibrated using HoLee
+	vol_args: vol_args['sigma'] is a constant given by HoLee calibration
+	clb.Libor: a function that takes (t, r_t) that gives L(t,t,t+3month)
+	"""
 	drift_args = {}
 	vol_args = {}
-	#theta = np.ones(100) * 0.0
-	#theta = np.ones(100) * 0.001
-	#x = np.linspace(0,TMax,num=100,endpoint=True)
-	#theta = interp1d(x, theta)
-	#sigma = 0.015
-	#sigma = 0.0
+
 	
 	clb = HoLee_calibrate()
 	sigma = clb.sigma
@@ -31,15 +32,15 @@ def Ho_Lee_USD(TMax):
 	return drift_args, vol_args, clb.Libor
 
 # Hull-White
-def Hull_White_USD(TMax):
+def Hull_White_USD():
+	"""
+	Return drift args, vol args, and libor simulator under HullWhite Model
+	drift_args: drft_args['theta'] is a function that takes in t as an argument, calibrated using HullWhite
+	vol_args: vol_args['sigma'] is a constant given by HullWhite calibration
+	clb.Libor: a function that takes (t, r_t) that gives L(t,t,t+3month)
+	"""
 	drift_args = {}
 	vol_args = {}
-	#theta = np.ones(100) * 0.0
-	#theta = np.ones(100) * 0.001
-	#x = np.linspace(0,TMax,num=100,endpoint=True)
-	#theta = interp1d(x, theta)
-	#sigma = 0.015
-	#sigma = 0.0
 	
 	clb = HullWhite_calibrate()
 	sigma = clb.sigma

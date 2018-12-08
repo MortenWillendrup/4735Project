@@ -13,10 +13,15 @@ Python files:
 		calibrates parameters or USD short rate models
 	7. InterestRate_USD.py
 		some helper functions for simulating ho-lee and hull-white models for USD short rates
-	8. Stock_cali.py
-		calibrates parameters for stock price model
-	9. Stock.py
-		some helper functions for simulating stock prices
+	8. Stock_cali.py 
+		calibrates parameters for log normal model
+	9. Stock.py 
+		some helper functions for simulating stock prices under log normal
+	10. Stock_cali_LV.py (not recommended)
+		calibrates parameters for local vol model
+	11. Stock_LV.py (not recommended)
+		some helper functions for simulating stock prices under Local vol
+
 
 Data files:
 	1. ^STOXX50E.csv
