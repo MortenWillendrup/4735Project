@@ -27,17 +27,21 @@ class RUSD_calibrate:
 		we solve for 'sigma' to match that cap price.
 		"""
 		self.dx = 1e-2
+		self.delta = 0.25
+
 		self.df_Yield = pd.read_csv(os.path.join("data","USYield.csv"),
 					header = None, delimiter = ",", index_col=0)
 		T = np.array(self.df_Yield.index)
 		yields = np.array(self.df_Yield.loc[:,1])
 		self.yields_interp = interpolate.interp1d(T.squeeze(), yields, 'quadratic', fill_value='extrapolate')
-		
+		three_Month_yield = self.df_Yield.loc[self.delta].squeeze()/100
+		three_Month_bond_price = (1+three_Month_yield)**(-self.delta)
+		self.libor_spot = (1.0-three_Month_bond_price)/(self.delta*three_Month_bond_price)
 		# cap
-		self.df_USD_Libor = pd.read_csv(os.path.join("data","USLibor.csv"), delimiter=",", index_col=0)
-		self.libor_spot = self.df_USD_Libor.loc["3M"].squeeze()/100
+		#self.df_USD_Libor = pd.read_csv(os.path.join("data","USLibor.csv"), delimiter=",", index_col=0)
+		#self.libor_spot = self.df_USD_Libor.loc["3M"].squeeze()/100
+		
 		self.df_cap = pd.read_csv(os.path.join("data","USCap.csv"), delimiter=",", index_col=0, header=0)
-		self.delta = 0.25
 		#P_3M = self.USD_bond_price(0.25)
 		#self.libor_spot = (1.0-P_3M)/(self.delta*P_3M)
 		self.K_cap = self.df_cap.iloc[0,1]/100.0
@@ -77,8 +81,8 @@ class HoLee_calibrate(RUSD_calibrate):
 		t2 = t1 + delta (e.g. 3 month)
 		strike = self.K_cap
 		"""
-		coef = (1+self.K_cap)/self.delta
-		strike = 1.0/(1+self.K_cap)
+		coef = (1+self.delta*self.K_cap)/self.delta
+		strike = 1.0/(1+self.delta*self.K_cap)
 		t2 = t1+self.delta
 		PT = self.USD_bond_price(t1)
 		PS = self.USD_bond_price(t2)
@@ -107,7 +111,7 @@ class HoLee_calibrate(RUSD_calibrate):
 		"""
 		solve for sigma by matching cap market price
 		"""
-		sol = optimize.root(lambda x:self.cap_from_sigma_HL(x, T_test)-self.price_cap, 0.02, method='hybr')	
+		sol = optimize.root(lambda x:self.cap_from_sigma_HL(x, T_test)-self.price_cap, 0.1, method='hybr')	
 		print("HoLee sigma:",sol.x)
 		sigma_HL = sol.x
 		return sigma_HL
@@ -147,8 +151,8 @@ class HullWhite_calibrate(RUSD_calibrate):
 		t2 = t1 + delta (e.g. 3 month)
 		strike = self.K_cap
 		"""
-		coef = (1+self.K_cap)/self.delta
-		strike = 1.0/(1+self.K_cap)
+		coef = (1+self.delta*self.K_cap)/self.delta
+		strike = 1.0/(1+self.delta*self.K_cap)
 		t2 = t1+self.delta
 		PT = self.USD_bond_price(t1)
 		PS = self.USD_bond_price(t2)

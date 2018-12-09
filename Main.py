@@ -187,7 +187,7 @@ if __name__ == "__main__":
 		raise Exception("Unrecognized short rate model: " + str(short_rate_model) + " , should be one of HullWhite and HoLee")
 	#Q0 = 1.13
 	if stock_vol_model == "LV":
-		print("Warning: SVI for Local vol model is not implemented, currently only using numerical interpolation of the call surface. It is recommended to change stock_vol_model to \"BS\"")
+		print("Warning: SVI for Local vol model is not implemented, currently only using numerical interpolation of the call surface (although we know SVI should be used). It is recommended to change stock_vol_model to \"BS\"")
 		vol_arg_Stock = Stock_vol_calibrate_LV()
 		drift_arg_Stock = Stock_drift_calibrate_LV(q, rho_XS, vol_arg_Stock, vol_FX)
 	elif stock_vol_model == "BS":
