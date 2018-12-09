@@ -18,16 +18,17 @@ class RUSD_calibrate:
 	"""
 	Base class for HoLee class and HullWhite class
 	"""
-	def __init__(self):
+	def __init__(self, use_caplets=True):
 		"""
 		1. Read US yield data and interpolate
-		2. read US Libor data and cap data
+		2. read US Libor data and cap data, or artifical caplets data
 		For cap data, we view it as the sum of multiple caplets
 		For instance, for 1-year cap we view it as the sum of 4 caplets, thus 4 bond put
 		we solve for 'sigma' to match that cap price.
 		"""
 		self.dx = 1e-2
 		self.delta = 0.25
+		self.use_caplets = True
 
 		self.df_Yield = pd.read_csv(os.path.join("data","USYield.csv"),
 					header = None, delimiter = ",", index_col=0)
@@ -46,6 +47,9 @@ class RUSD_calibrate:
 		#self.libor_spot = (1.0-P_3M)/(self.delta*P_3M)
 		self.K_cap = self.df_cap.iloc[0,1]/100.0
 		self.price_cap = self.df_cap.iloc[0,0]/100.0
+		
+		self.df_caplets = pd.read_csv(os.path.join("data","USCaplets.csv"), delimiter=",", header=0)
+		
 		
 	def USD_bond_price(self,T):
 		"""
@@ -66,28 +70,28 @@ class HoLee_calibrate(RUSD_calibrate):
 	"""
 	HoLee calibrate, extending RUSD_calibrate
 	"""
-	def __init__(self):
-		RUSD_calibrate.__init__(self)
+	def __init__(self, use_caplets=True):
+		RUSD_calibrate.__init__(self, use_caplets)
 		T_test = 1.0
 		self.sigma = self.calib_sigma_HL(T_test)
 		#self.sigma = 0.015
 
 		self.theta = self.theta_HL
 		
-	def caplet_from_sigma_HL(self,sigma, t1):
+	def caplet_from_sigma_HL(self,sigma, t1, K_cap):
 		"""		
 		calculate caplet price using black formula
 		sigma and t1 given
 		t2 = t1 + delta (e.g. 3 month)
-		strike = self.K_cap
+		strike = K_cap
 		"""
-		coef = (1+self.delta*self.K_cap)/self.delta
-		strike = 1.0/(1+self.delta*self.K_cap)
+		coef = (1+self.delta*K_cap)/self.delta
+		strike = 1.0/(1+self.delta*K_cap)
 		t2 = t1+self.delta
 		PT = self.USD_bond_price(t1)
 		PS = self.USD_bond_price(t2)
 		if t1 == 0.0:
-			return max(0, self.libor_spot-self.K_cap)*PS
+			return max(0, self.libor_spot-K_cap)*PS
 			#return max(0, 1.0/self.delta*(1.0/PS-1)-self.K_cap)
 		sigma_p = sigma*self.delta*np.sqrt(t1)
 		d1 = 1.0/sigma_p * np.log(PS/PT/strike)+0.5*sigma_p
@@ -105,15 +109,30 @@ class HoLee_calibrate(RUSD_calibrate):
 		tt = np.linspace(0.0,float(T)-self.delta,int(float(T)//self.delta))
 		cap_price = 0
 		for t1 in tt:
-			cap_price += self.caplet_from_sigma_HL(sigma, t1)
+			cap_price += self.caplet_from_sigma_HL(sigma, t1, self.K_cap)
 		return cap_price	
 	def calib_sigma_HL(self,T_test):
 		"""
-		solve for sigma by matching cap market price
+		solve for sigma by matching cap market price (if self.use_caplets = False)
+		solve for simga by matching caplet market price (if self.use_caplets = True)
 		"""
-		sol = optimize.root(lambda x:self.cap_from_sigma_HL(x, T_test)-self.price_cap, 0.1, method='hybr')	
-		print("HoLee sigma:",sol.x)
-		sigma_HL = sol.x
+		if not self.use_caplets:
+			sol = optimize.root(lambda x:self.cap_from_sigma_HL(x, T_test)-self.price_cap, 0.1, method='hybr')	
+			print("HoLee sigma:",sol.x)
+			sigma_HL = sol.x
+		else:		
+			t1 = np.array(self.df_caplets.iloc[:,0])
+			l_strike = np.array(self.df_caplets.iloc[:,2])/100
+			prices = np.array(self.df_caplets.iloc[:,1])/100
+			def caplet_price_mse(sig):
+				res = 0
+				N = len(t1)
+				for i in range(N):
+					res += (prices[i]-self.caplet_from_sigma_HL(sig,t1[i],l_strike[i]))**2
+				return res/N
+			sol = optimize.minimize(lambda x:caplet_price_mse(x), 0.2, method='BFGS', bounds = (0,None))	
+			print("HoLee sigma:",sol.x)
+			sigma_HL = sol.x
 		return sigma_HL
 		
 	def theta_HL(self,t):
@@ -136,28 +155,28 @@ class HullWhite_calibrate(RUSD_calibrate):
 	"""
 	HullWhite calibrate, extending RUSD_calibrate
 	"""
-	def __init__(self):
-		RUSD_calibrate.__init__(self)	
+	def __init__(self, use_caplets=True):
+		RUSD_calibrate.__init__(self, use_caplets=True)	
 		self.a = 0.03
 		T_test = 1.0
 		self.sigma = self.calib_sigma_HW(T_test)
 		#self.sigma = 0.015
 		self.theta = self.theta_HW
 		
-	def caplet_from_sigma_HW(self, sigma, t1):
+	def caplet_from_sigma_HW(self, sigma, t1, K_cap):
 		"""		
 		calculate caplet price using black formula
 		sigma and t1 given
 		t2 = t1 + delta (e.g. 3 month)
 		strike = self.K_cap
 		"""
-		coef = (1+self.delta*self.K_cap)/self.delta
-		strike = 1.0/(1+self.delta*self.K_cap)
+		coef = (1+self.delta*K_cap)/self.delta
+		strike = 1.0/(1+self.delta*K_cap)
 		t2 = t1+self.delta
 		PT = self.USD_bond_price(t1)
 		PS = self.USD_bond_price(t2)
 		if t1 == 0.0:
-			return max(0, self.libor_spot-self.K_cap) * PS
+			return max(0, self.libor_spot-K_cap) * PS
 		sigma_p = 1.0/self.a*(1-np.exp(-self.a*self.delta))*np.sqrt(sigma**2/(2*self.a)*(1-np.exp(-2*self.a*self.delta)))
 		d1 = 1.0/sigma_p * np.log(PS/PT/strike)+0.5*sigma_p
 		d2 = d1 - sigma_p
@@ -174,15 +193,29 @@ class HullWhite_calibrate(RUSD_calibrate):
 		tt = np.linspace(0.0,float(T)-self.delta,int(float(T)//self.delta))
 		cap_price = 0
 		for t1 in tt:
-			cap_price += self.caplet_from_sigma_HW(sigma, t1)
+			cap_price += self.caplet_from_sigma_HW(sigma, t1, self.K_cap)
 		return cap_price
 	def calib_sigma_HW(self, T_test):
 		"""
 		solve for sigma by matching cap market price
 		"""
-		sol = optimize.root(lambda x:self.cap_from_sigma_HW(x, T_test)-self.price_cap, 0.2, method='hybr')	
-		print("HullWhite sigma:",sol.x)
-		sigma_HW = sol.x
+		if self.use_caplets == False:
+			sol = optimize.root(lambda x:self.cap_from_sigma_HW(x, T_test)-self.price_cap, 0.2, method='hybr')	
+			print("HullWhite sigma:",sol.x)
+			sigma_HW = sol.x
+		else:		
+			t1 = np.array(self.df_caplets.iloc[:,0])
+			l_strike = np.array(self.df_caplets.iloc[:,2])/100
+			prices = np.array(self.df_caplets.iloc[:,1])/100
+			def caplet_price_mse(sig):
+				res = 0
+				N = len(t1)
+				for i in range(N):
+					res += (prices[i]-self.caplet_from_sigma_HW(sig,t1[i],l_strike[i]))**2
+				return res/N
+			sol = optimize.minimize(lambda x:caplet_price_mse(x), 0.2, method='BFGS', bounds = (0,None))	
+			print("HullWhite sigma:",sol.x)
+			sigma_HW = sol.x		
 		return sigma_HW
 		
 	def B_HW(self,T, t=0):

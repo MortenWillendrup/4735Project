@@ -38,6 +38,14 @@ Data files:
 		stock call surface
 	7. USCap.csv
 		US cap prices
+		first column is term in years
+		second column is price in basis points
+		third column is strike in percentage
+	7. USCaplets.csv
+		artificial US Caplets price. Use either USCap.csv or USCaplets.csv
+		first column is term in years
+		second column is price in basis points
+		third column is strike in percentage
 	8. USLibor.csv
 		today's US libor 
 	9. USYield.csv

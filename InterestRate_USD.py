@@ -12,7 +12,7 @@ import math
 import matplotlib.pyplot as plt
 
 # Ho-Lee
-def Ho_Lee_USD():
+def Ho_Lee_USD(use_caplets):
 	"""
 	Return drift args, vol args, and libor simulator under HoLee Model
 	drift_args: drft_args['theta'] is a function that takes in t as an argument, calibrated using HoLee
@@ -23,7 +23,7 @@ def Ho_Lee_USD():
 	vol_args = {}
 
 	
-	clb = HoLee_calibrate()
+	clb = HoLee_calibrate(use_caplets)
 	sigma = clb.sigma
 	theta = clb.theta
 	
@@ -32,7 +32,7 @@ def Ho_Lee_USD():
 	return drift_args, vol_args, clb.Libor
 
 # Hull-White
-def Hull_White_USD():
+def Hull_White_USD(use_caplets):
 	"""
 	Return drift args, vol args, and libor simulator under HullWhite Model
 	drift_args: drft_args['theta'] is a function that takes in t as an argument, calibrated using HullWhite
@@ -42,7 +42,7 @@ def Hull_White_USD():
 	drift_args = {}
 	vol_args = {}
 	
-	clb = HullWhite_calibrate()
+	clb = HullWhite_calibrate(use_caplets)
 	sigma = clb.sigma
 	theta = clb.theta
 	

@@ -144,9 +144,10 @@ if __name__ == "__main__":
 	T = 1.0
 	short_rate_model = "HullWhite" # "HullWhite" or "HoLee"
 	stock_vol_model = "LV" # "BS" or "LV"
+	use_caplets = True # if True, use artificial caplets data in US_Caplets.csv; if false, use market cap data in US_Cap.csv
 	
 	# parameters for MonteCarlo
-	num_iter = 5000
+	num_iter = 1000 #5000
 	delta_t = 0.1
 	ensure_positive = True
 	eps = 1e-8
@@ -170,14 +171,14 @@ if __name__ == "__main__":
 	vol_FX = corr_calib.vol_FX
 	
 	if short_rate_model == "HullWhite":
-		drift_arg_USD, vol_arg_USD, libor_simulator = Hull_White_USD()
+		drift_arg_USD, vol_arg_USD, libor_simulator = Hull_White_USD(use_caplets)
 		drift_func_USD = Hull_White_drift(drift_arg_USD)
 		vol_func_USD = Hull_White_vol(vol_arg_USD)
 		drift_arg_EUR, vol_arg_EUR = Hull_White_EUR()
 		drift_func_EUR = Hull_White_drift(drift_arg_EUR)
 		vol_func_EUR = Hull_White_vol(vol_arg_EUR)
 	elif short_rate_model == "HoLee":
-		drift_arg_USD, vol_arg_USD, libor_simulator = Ho_Lee_USD()
+		drift_arg_USD, vol_arg_USD, libor_simulator = Ho_Lee_USD(use_caplets)
 		drift_func_USD = Ho_Lee_drift(drift_arg_USD)
 		vol_func_USD = Ho_Lee_vol(vol_arg_USD)
 		drift_arg_EUR, vol_arg_EUR = Ho_Lee_EUR()
