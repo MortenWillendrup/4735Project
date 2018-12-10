@@ -145,7 +145,7 @@ if __name__ == "__main__":
 	T1 = 0.5
 	T = 1.0
 	short_rate_model = "HullWhite" # "HullWhite" or "HoLee"
-	stock_vol_model = "LV" # "BS" or "LV"
+	stock_vol_model = "BS" # "BS" or "LV"
 	use_caplets = True # if True, use artificial caplets data in US_Caplets.csv; if false, use market cap data in US_Cap.csv
 	
 	# parameters for MonteCarlo
