@@ -7,12 +7,12 @@ Created on Fri Nov  9 11:29:55 2018
 
 import numpy as np
 from scipy.interpolate import interp1d, interp2d
-from Stock_cali_LV import Stock_calibrate_LV
+from Stock_cali import Stock_calibrate
 import math
 import matplotlib.pyplot as plt
 
 
-def Stock_drift_calibrate_LV(div, rho_XS, vol_arg_Stock, vol_FX):
+def Stock_drift_calibrate_BS(div, rho_XS, vol_arg_Stock, vol_FX):
 	"""
 	calculates (r_t-q-rho_XS*vol_FX*vol_Stock)
 	Parameters
@@ -30,13 +30,13 @@ def Stock_drift_calibrate_LV(div, rho_XS, vol_arg_Stock, vol_FX):
 	drift_args['drift'] = Stock_drift_with_rho
 	return drift_args
 	
-def Stock_vol_calibrate_LV():
+def Stock_vol_calibrate_BS():
 	vol_args = {}
 
 	"""
 	Returns a dictionary with key:'sigma', value = func(S_t, t, r_t(euro))
 	"""
-	sc = Stock_calibrate_LV()
+	sc = Stock_calibrate()
 	sigma = sc.sigma
 	vol_args['sigma'] = sigma
 	return  vol_args

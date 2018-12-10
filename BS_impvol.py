@@ -14,43 +14,8 @@ import sys
 from scipy import interpolate
 
 
-# Import raw data
-df_stock_stats = pd.read_csv(os.path.join("data", "Stock.csv"), index_col=0, header=None)
-spot_str = df_stock_stats.loc['Price'].squeeze()
-spot = float(spot_str)
-div_str = df_stock_stats.loc['div'].squeeze()
-q = float(div_str.strip("%"))/100
-df_s = pd.read_csv(os.path.join("data","StockCall_shortterm.csv"),index_col=0)
-df_s.dropna(inplace = True)
-df_m = pd.read_csv(os.path.join("data","StockCall_midterm.csv"),index_col=0)
-df_m.dropna(inplace = True)
-df_l = pd.read_csv(os.path.join("data","StockCall_longterm.csv"),index_col=0)
-df_l.dropna(inplace = True)
 
-# Drop deep ITM options data which have little liquidity
-df_s_trunc = df_s[13:]
-df_m_trunc = df_m[17:]
-df_l_trunc = df_l[11:]
-df_all = pd.concat([df_s_trunc, df_m_trunc], axis=1)
 
-# Euro bond price
-df_Yield = pd.read_csv(os.path.join("data","GERYield.csv"),
-        header = None, delimiter = "\t", index_col=0)
-T = np.array(df_Yield.index)
-yields = np.array(df_Yield.loc[:,1])
-yields_interp = interpolate.interp1d(T.squeeze(), yields, 'cubic', fill_value='extrapolate')
-def Euro_bond_price(T):
-    T_yield = yields_interp(T)
-    price = (1+T_yield/100)**(-T)
-    return price
-
-# Calculate the Black Scholes price of European call option
-def bs_price(s, k, p, T, q, sigma):
-    F = s * np.exp(-q * T)/p
-    d1 = (np.log(F / k) + 0.5 * sigma**2 * T) / (sigma * np.sqrt(T))
-    d2 = d1 - sigma * np.sqrt(T)
-    price = p * (F * stats.norm.cdf(d1) - k *  stats.norm.cdf(d2))
-    return price
 
 
 # Calculate implied vol using bisection method
@@ -99,7 +64,7 @@ def optimal_impvol_naiveloop(spot,q,df):
     vol_arr = np.zeros(1,)
     min_err = float('inf')
     min_vol = 0
-    for i in range(0,len(k)):
+    for i in range(0,len(k)):	
         for j in range(0,len(T)):
             price = df.iloc[i,j]
             if(pd.isna(price) == True):
@@ -122,4 +87,29 @@ def optimal_impvol_naiveloop(spot,q,df):
 
 
 if __name__ == '__main__':
-    print("Optimal BS implied volatility: ",optimal_impvol_naiveloop(spot,q,df_all))
+	# Import raw data
+	df_stock_stats = pd.read_csv(os.path.join("data", "Stock.csv"), index_col=0, header=None)
+	spot_str = df_stock_stats.loc['Price'].squeeze()
+	spot = float(spot_str)
+	div_str = df_stock_stats.loc['div'].squeeze()
+	q = float(div_str.strip("%"))/100
+	df_s = pd.read_csv(os.path.join("data","StockCall_shortterm.csv"),index_col=0)
+	df_s.dropna(inplace = True)
+	df_m = pd.read_csv(os.path.join("data","StockCall_midterm.csv"),index_col=0)
+	df_m.dropna(inplace = True)
+	df_l = pd.read_csv(os.path.join("data","StockCall_longterm.csv"),index_col=0)
+	df_l.dropna(inplace = True)
+	
+	# Drop deep ITM options data which have little liquidity
+	df_s_trunc = df_s[13:]
+	df_m_trunc = df_m[17:]
+	df_l_trunc = df_l[11:]
+	df_all = pd.concat([df_s_trunc, df_m_trunc], axis=1)
+	
+	# Euro bond price
+	df_Yield = pd.read_csv(os.path.join("data","GERYield.csv"),
+	        header = None, delimiter = "\t", index_col=0)
+	T = np.array(df_Yield.index)
+	yields = np.array(df_Yield.loc[:,1])
+	yields_interp = interpolate.interp1d(T.squeeze(), yields, 'cubic', fill_value='extrapolate')    
+	print("Optimal BS implied volatility: ",optimal_impvol_naiveloop(spot,q,df_all))

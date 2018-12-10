@@ -19,6 +19,8 @@ from InterestRate_USD import Ho_Lee_USD, Hull_White_USD
 from InterestRate_EUR import Ho_Lee_EUR, Hull_White_EUR
 
 from Stock_LV import Stock_drift_calibrate_LV, Stock_vol_calibrate_LV
+from Stock_BS import Stock_drift_calibrate_BS, Stock_vol_calibrate_BS
+
 from correlation import Correlation_calibrate
 
 def Ho_Lee_drift(drift_arg):
@@ -147,7 +149,7 @@ if __name__ == "__main__":
 	use_caplets = True # if True, use artificial caplets data in US_Caplets.csv; if false, use market cap data in US_Cap.csv
 	
 	# parameters for MonteCarlo
-	num_iter = 1000 #5000
+	num_iter = 5000 #5000
 	delta_t = 0.1
 	ensure_positive = True
 	eps = 1e-8
@@ -192,7 +194,8 @@ if __name__ == "__main__":
 		vol_arg_Stock = Stock_vol_calibrate_LV()
 		drift_arg_Stock = Stock_drift_calibrate_LV(q, rho_XS, vol_arg_Stock, vol_FX)
 	elif stock_vol_model == "BS":
-		raise Exception("Will Do Black Scholes")
+		vol_arg_Stock = Stock_vol_calibrate_BS()
+		drift_arg_Stock = Stock_drift_calibrate_BS(q, rho_XS, vol_arg_Stock, vol_FX)		
 	else:
 		raise Exception("Unrecognized stock vol model: " + str(stock_vol_model) + " , should be one of LV and BS")
 

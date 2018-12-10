@@ -15,8 +15,8 @@ Python files:
 		some helper functions for simulating ho-lee and hull-white models for USD short rates
 	8. Stock_cali.py 
 		calibrates parameters for log normal model
-	9. Stock.py 
-		some helper functions for simulating stock prices under log normal
+	9. Stock_BS.py 
+		some helper functions for simulating stock prices under log normal (black scholes)
 	10. Stock_cali_LV.py (not recommended)
 		calibrates parameters for local vol model
 	11. Stock_LV.py (not recommended)
