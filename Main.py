@@ -149,7 +149,7 @@ if __name__ == "__main__":
 	use_caplets = True # if True, use artificial caplets data in US_Caplets.csv; if false, use market cap data in US_Cap.csv
 	
 	# parameters for MonteCarlo
-	num_iter = 1000 #For "BS", use 5000 because BS is fast; for "LV", use less than 1000, since it is slow.
+	num_iter = 3000 #For "BS", use 5000 because BS is fast; for "LV", use less than 1000, since it is slow.
 	delta_t = 0.1
 	ensure_positive = True
 	eps = 1e-8

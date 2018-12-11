@@ -144,25 +144,26 @@ class Stock_calibrate_LV:
 		self.SVI_df = pd.DataFrame(SVI)
 		
 	def SVI_imp_vol(self,K,T):
+		FT = self.stock_forward_price(T)
+		k = np.log(K/FT)
 		T_arr_indays = np.array(self.SVI_df.columns)
 		T_indays = T*365.0
 		_i = np.searchsorted(T_arr_indays,T_indays)
 		if _i == 0 or _i == len(T_arr_indays):
 			if _i == 0:
-				T = T_arr_indays[_i]/365.0
+				#T1 = T_arr_indays[_i]/365.0
 				param = self.SVI_df.loc[:,T_arr_indays[0]]
 
 			else:
-				T = T_arr_indays[-1]/365.0
+				#T1 = T_arr_indays[-1]/365.0
 				param = self.SVI_df.loc[:,T_arr_indays[-1]]
 
-			FT = self.stock_forward_price(T)
-			PT = self.EUR_bond_price(T)
+			#FT1 = self.stock_forward_price(T1)
 			a,b,rho,m,sigma = list(param)
-			k = np.log(K/FT)
+			#k = np.log(K/FT)
 			imp_tot_var = raw_SVI(a,b,rho,m,sigma,k)
 			imp_vol = np.sqrt(imp_tot_var/T)
-			return BS(imp_vol,FT,K,PT,T)
+			return imp_vol
 		else:
 			T1 = T_arr_indays[_i-1]
 			T2 = T_arr_indays[_i]
@@ -180,16 +181,15 @@ class Stock_calibrate_LV:
 			sigma2 = param2['sigma']
 			T1 = T1/365.0
 			T2 = T2/365.0
-			FT1 = self.stock_forward_price(T1)
-			FT2 = self.stock_forward_price(T2)
+			#FT1 = self.stock_forward_price(T1)
+			#FT2 = self.stock_forward_price(T2)
 
-			k1 = np.log(K/FT1)
-			k2 = np.log(K/FT2)
-			imp_tot_var1 = raw_SVI(a1,b1,rho1,m1,sigma1,k1)
-			imp_tot_var2 = raw_SVI(a2,b2,rho2,m2,sigma2,k2)
+			#k1 = np.log(K/FT1)
+			#k2 = np.log(K/FT2)
+			imp_tot_var1 = raw_SVI(a1,b1,rho1,m1,sigma1,k)
+			imp_tot_var2 = raw_SVI(a2,b2,rho2,m2,sigma2,k)
 			imp_tot_var = (imp_tot_var2 - imp_tot_var1)/(T2-T1)*(T-T1)+imp_tot_var1
 			imp_vol = np.sqrt(imp_tot_var/T)
-			#FT = self.stock_forward_price(T)
 			#PT = self.EUR_bond_price(T)
 			#return BS(imp_vol,FT,K,PT,T)
 			return imp_vol
@@ -233,8 +233,8 @@ if __name__ == "__main__":
 	Y = np.linspace(0.1,2,NT)
 	XX,YY = np.meshgrid(X,Y)
 	Z = np.zeros((NK,NT))
-	for i in range(0,NK):
-		for j in range(0,NT):
+	for j in range(0,NT):
+		for i in range(0,NK):
 			Z[i,j] = sc.local_vol(X[i],Y[j], -0.00)
 
 
