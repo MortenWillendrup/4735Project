@@ -45,8 +45,8 @@ class RUSD_calibrate:
 		self.df_cap = pd.read_csv(os.path.join("data","USCap.csv"), delimiter=",", index_col=0, header=0)
 		#P_3M = self.USD_bond_price(0.25)
 		#self.libor_spot = (1.0-P_3M)/(self.delta*P_3M)
-		self.K_cap = self.df_cap.iloc[0,1]/100.0
-		self.price_cap = self.df_cap.iloc[0,0]/100.0
+		self.K_cap = self.df_cap.iloc[1,1]/100.0
+		self.price_cap = self.df_cap.iloc[1,0]/100.0
 		
 		self.df_caplets = pd.read_csv(os.path.join("data","USCaplets.csv"), delimiter=",", header=0)
 		
