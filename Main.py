@@ -149,7 +149,7 @@ if __name__ == "__main__":
 	use_caplets = True # if True, use artificial caplets data in US_Caplets.csv; if false, use market cap data in US_Cap.csv
 	
 	# parameters for MonteCarlo
-	num_iter = 5000 #5000
+	num_iter = 1000 #For "BS", use 5000 because BS is fast; for "LV", use less than 1000, since it is slow.
 	delta_t = 0.1
 	ensure_positive = True
 	eps = 1e-8
@@ -190,7 +190,6 @@ if __name__ == "__main__":
 		raise Exception("Unrecognized short rate model: " + str(short_rate_model) + " , should be one of HullWhite and HoLee")
 	#Q0 = 1.13
 	if stock_vol_model == "LV":
-		print("Warning: SVI for Local vol model is not implemented, currently only using numerical interpolation of the call surface (although we know SVI should be used). It is recommended to change stock_vol_model to \"BS\"")
 		vol_arg_Stock = Stock_vol_calibrate_LV()
 		drift_arg_Stock = Stock_drift_calibrate_LV(q, rho_XS, vol_arg_Stock, vol_FX)
 	elif stock_vol_model == "BS":

@@ -17,8 +17,8 @@ Python files:
 		calibrates parameters for log normal model
 	9. Stock_BS.py 
 		some helper functions for simulating stock prices under log normal (black scholes)
-	10. Stock_cali_LV.py (not recommended)
-		calibrates parameters for local vol model
+	10. Stock_cali_LV.py (very slow)
+		calibrates parameters for local vol model using SVI
 	11. Stock_LV.py (not recommended)
 		some helper functions for simulating stock prices under Local vol
 

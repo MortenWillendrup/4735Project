@@ -40,7 +40,7 @@ class Stock_calibrate:
 		#df_s.dropna(inplace = True)
 		df_m = pd.read_csv(os.path.join("data","StockCall_midterm.csv"),index_col=0)
 		#df_m.dropna(inplace = True)
-		#df_l = pd.read_csv(os.path.join("data","StockCall_longterm.csv"),index_col=0)
+		df_l = pd.read_csv(os.path.join("data","StockCall_longterm.csv"),index_col=0)
 		#df_l.dropna(inplace = True)
 		
 		# Drop deep ITM options data which have little liquidity
@@ -48,7 +48,7 @@ class Stock_calibrate:
 		#df_m_trunc = df_m[17:]
 		#df_l_trunc = df_l[11:]
 		#self.df_all = pd.concat([df_s_trunc, df_m_trunc,df_l_trunc], axis=1)
-		self.df_all = pd.concat([df_s, df_m], axis=1)
+		self.df_all = pd.concat([df_s, df_m,df_l], axis=1)
 		self.df_all = self.df_all.loc[self.df_all.index >=2500]
 		self.df_all = self.df_all.loc[self.df_all.index<=3500 ]
 		# Euro bond price

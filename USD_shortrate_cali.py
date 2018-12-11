@@ -28,7 +28,7 @@ class RUSD_calibrate:
 		"""
 		self.dx = 1e-2
 		self.delta = 0.25
-		self.use_caplets = True
+		self.use_caplets = use_caplets
 
 		self.df_Yield = pd.read_csv(os.path.join("data","USYield.csv"),
 					header = None, delimiter = ",", index_col=0)
@@ -106,7 +106,7 @@ class HoLee_calibrate(RUSD_calibrate):
 		Calculate cap price by adding 4 caplets prices
 		sigma and T given
 		"""
-		tt = np.linspace(0.0,float(T)-self.delta,int(float(T)//self.delta))
+		tt = np.linspace(0.0,0.0+float(T)-self.delta,int(float(T)//self.delta))
 		cap_price = 0
 		for t1 in tt:
 			cap_price += self.caplet_from_sigma_HL(sigma, t1, self.K_cap)
@@ -156,7 +156,7 @@ class HullWhite_calibrate(RUSD_calibrate):
 	HullWhite calibrate, extending RUSD_calibrate
 	"""
 	def __init__(self, use_caplets=True):
-		RUSD_calibrate.__init__(self, use_caplets=True)	
+		RUSD_calibrate.__init__(self, use_caplets=use_caplets)	
 		self.a = 0.03
 		T_test = 1.0
 		self.sigma = self.calib_sigma_HW(T_test)
@@ -190,7 +190,7 @@ class HullWhite_calibrate(RUSD_calibrate):
 		Calculate cap price by adding 4 caplets prices
 		sigma and T given
 		"""
-		tt = np.linspace(0.0,float(T)-self.delta,int(float(T)//self.delta))
+		tt = np.linspace(0.0,0.0+float(T)-self.delta,int(float(T)//self.delta))
 		cap_price = 0
 		for t1 in tt:
 			cap_price += self.caplet_from_sigma_HW(sigma, t1, self.K_cap)
@@ -251,7 +251,7 @@ class HullWhite_calibrate(RUSD_calibrate):
 		return (1-P)/(delta*P)
 		
 if __name__ == "__main__":
-	clb = HoLee_calibrate()
+	clb = HoLee_calibrate(use_caplets=False)
 	tt = np.linspace(0,30,300)
 	plt.plot(tt, clb.USD_bond_price(tt))
 	plt.title("USD bond price")
@@ -278,7 +278,7 @@ if __name__ == "__main__":
 	plt.title("HoLee theta")
 	plt.show()
 	
-	clb2 = HullWhite_calibrate()
+	clb2 = HullWhite_calibrate(use_caplets=False)
 	theta_HW_tt = []
 
 	for t in tt:

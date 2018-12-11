@@ -26,7 +26,7 @@ def partial_derivative(func, var=0, point=[], n=1, dx=1e-4):
     def wraps(x):
         args[var] = x
         return func(*args)
-    return derivative(wraps, point[var], dx = dx, n=n, order=7)
+    return derivative(wraps, point[var], dx = dx, n=n, order=3)
 				
 if __name__ == "__main__":
 	print(partial_derivative(f, 0, [3,2], 2))
