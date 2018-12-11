@@ -52,9 +52,10 @@ class RUSD_calibrate:
 		self.Term = self.df_cap.index[1]
 		self.cap_price_blackvol = self.df_cap.iloc[1,0]/100
 		self.ATMStrike = self.df_cap.iloc[1,1]/100
-		self.K_cap = self.ATMStrike 
+		self.K_cap = self.ATMStrike
 		self.price_cap = 0.0
 		tt = np.linspace(0.0,float(self.Term)-self.delta,int(float(self.Term)//self.delta))
+		
 		for t1 in tt:
 			if t1 == 0:
 				continue
@@ -194,7 +195,7 @@ class HullWhite_calibrate(RUSD_calibrate):
 		if t1 == 0.0:
 			return 0.0;
 			#return max(0, self.libor_spot-K_cap) * PS
-		sigma_p = 1.0/self.a*(1-np.exp(-self.a*self.delta))*np.sqrt(sigma**2/(2*self.a)*(1-np.exp(-2*self.a*self.delta)))
+		sigma_p = 1.0/self.a*(1-np.exp(-self.a*self.delta))*np.sqrt(sigma**2/(2*self.a)*(1-np.exp(-2*self.a*t1)))
 		d1 = 1.0/sigma_p * np.log(PS/PT/strike)+0.5*sigma_p
 		d2 = d1 - sigma_p
 		N_minusd1 = norm.cdf(-d1)
@@ -207,7 +208,7 @@ class HullWhite_calibrate(RUSD_calibrate):
 		Calculate cap price by adding 4 caplets prices
 		sigma and T given
 		"""
-		tt = np.linspace(0.0,self.delta+float(self.Term)-self.delta,int(float(self.Term)//self.delta))
+		tt = np.linspace(0.0,float(self.Term)-self.delta,int(float(self.Term)//self.delta))
 		cap_price = 0
 		for t1 in tt:
 			cap_price += self.caplet_from_sigma_HW(sigma, t1, self.K_cap)
