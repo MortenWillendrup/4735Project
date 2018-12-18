@@ -8,12 +8,8 @@ Created on Tue Nov  6 00:30:41 2018
 import numpy as np
 import pandas as pd
 import math
-import matplotlib.pyplot as plt
-from copy import deepcopy
-from scipy.stats import norm
 import os
 from scipy import interpolate
-
 
 from InterestRate_USD import Ho_Lee_USD, Hull_White_USD
 from InterestRate_EUR import Ho_Lee_EUR, Hull_White_EUR
@@ -95,7 +91,6 @@ def RungeKutta_simulator(Params):
 	S[0] = S0
 	N1 = int((T1 - T_init)/delta_t)
 
-	
 	time = np.zeros(N+1)
 	time[0] = T_init
 	
@@ -123,9 +118,7 @@ def RungeKutta_simulator(Params):
 	payoff = max(0, S[N]-K)
 	discount = get_discount(r_USD,delta_t)
 	return discount*payoff
-	
 
-	
 def get_prices(num_iter, Params):
 	"""
 	Run Monte Carlo num_iter of times, given the Params
@@ -188,7 +181,7 @@ if __name__ == "__main__":
 		vol_func_EUR = Ho_Lee_vol(vol_arg_EUR)
 	else:
 		raise Exception("Unrecognized short rate model: " + str(short_rate_model) + " , should be one of HullWhite and HoLee")
-	#Q0 = 1.13
+
 	if stock_vol_model == "LV":
 		vol_arg_Stock = Stock_vol_calibrate_LV()
 		drift_arg_Stock = Stock_drift_calibrate_LV(q, rho_XS, vol_arg_Stock, vol_FX)
@@ -230,13 +223,3 @@ if __name__ == "__main__":
 	print("mean:" ,np.mean(prices))
 	print("std of mean:", np.std(prices)/np.sqrt(num_iter))
 	
-#==============================================================================
-# 	BS_sig = 0.14
-# 	d1 = (np.log(S0/K) + (r0_Euro - q +0.5*BS_sig**2)*T)/(BS_sig*np.sqrt(T))
-# 	d2 = d1 - np.sqrt(T)*BS_sig
-# 	Nd1 = norm.cdf(d1)
-# 	Nd2 = norm.cdf(d2)
-# 	BS_call = S0*np.exp(-q*T)*Nd1 - K * np.exp(-r0_Euro*T)* Nd2
-# 	print("Black Scholes :", BS_call)
-# 
-#==============================================================================

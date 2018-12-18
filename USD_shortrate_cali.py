@@ -10,7 +10,6 @@ from scipy.misc import derivative
 import pandas as pd
 import os 
 from scipy import interpolate
-import matplotlib.pyplot as plt
 from scipy.stats import norm
 from scipy import optimize
 
@@ -268,40 +267,43 @@ class HullWhite_calibrate(RUSD_calibrate):
 		P = first*second
 		return (1-P)/(delta*P)
 		
-if __name__ == "__main__":
-	clb = HoLee_calibrate(use_caplets=False)
-	tt = np.linspace(0,30,300)
-	plt.plot(tt, clb.USD_bond_price(tt))
-	plt.title("USD bond price")
-	plt.show()
-	delta = 0.25
-
-	tt = np.linspace(delta,10.0,int(float(10.0)//delta))
-	forwards = np.zeros(len(tt))
-	for i in range(0,len(tt)):
-		t1 = tt[i]
-		forwards[i] = clb.USD_forward_rate(t1)
-	plt.plot(tt, forwards)
-	plt.title("forwards")
-	plt.show()
-	
-	tt = np.linspace(0.01,float(10.0),100)
-	theta_HL_tt = []
-	forwards = []
-	for t in tt:
-		theta_HL_tt.append(clb.theta_HL(t))
-	theta_HL_tt= np.array(theta_HL_tt)
-	
-	plt.plot(tt, theta_HL_tt)
-	plt.title("HoLee theta")
-	plt.show()
-	
-	clb2 = HullWhite_calibrate(use_caplets=False)
-	theta_HW_tt = []
-
-	for t in tt:
-		theta_HW_tt.append(clb2.theta_HW(t))
-	theta_HW_tt= np.array(theta_HW_tt)
-	plt.plot(tt, theta_HW_tt)
-	plt.title("HullWhite theta")
-	plt.show()
+#==============================================================================
+# import matplotlib.pyplot as plt
+# if __name__ == "__main__":
+# 	clb = HoLee_calibrate(use_caplets=False)
+# 	tt = np.linspace(0,30,300)
+# 	plt.plot(tt, clb.USD_bond_price(tt))
+# 	plt.title("USD bond price")
+# 	plt.show()
+# 	delta = 0.25
+# 
+# 	tt = np.linspace(delta,10.0,int(float(10.0)//delta))
+# 	forwards = np.zeros(len(tt))
+# 	for i in range(0,len(tt)):
+# 		t1 = tt[i]
+# 		forwards[i] = clb.USD_forward_rate(t1)
+# 	plt.plot(tt, forwards)
+# 	plt.title("forwards")
+# 	plt.show()
+# 	
+# 	tt = np.linspace(0.01,float(10.0),100)
+# 	theta_HL_tt = []
+# 	forwards = []
+# 	for t in tt:
+# 		theta_HL_tt.append(clb.theta_HL(t))
+# 	theta_HL_tt= np.array(theta_HL_tt)
+# 	
+# 	plt.plot(tt, theta_HL_tt)
+# 	plt.title("HoLee theta")
+# 	plt.show()
+# 	
+# 	clb2 = HullWhite_calibrate(use_caplets=False)
+# 	theta_HW_tt = []
+# 
+# 	for t in tt:
+# 		theta_HW_tt.append(clb2.theta_HW(t))
+# 	theta_HW_tt= np.array(theta_HW_tt)
+# 	plt.plot(tt, theta_HW_tt)
+# 	plt.title("HullWhite theta")
+# 	plt.show()
+#==============================================================================

@@ -7,15 +7,12 @@ Created on Wed Nov 28 19:24:54 2018
 
 import numpy as np
 from derivative import partial_derivative
-from scipy.misc import derivative
 import pandas as pd
 import os 
 from scipy import interpolate
-import matplotlib.pyplot as plt
 from scipy.stats import norm
 from scipy import optimize
-import math
-from mpl_toolkits.mplot3d import Axes3D
+
 from scipy.optimize import minimize
 
 def BS(sig, F, K, P, T):
@@ -33,7 +30,6 @@ def BS_vol(F, K, C, P, T):
 def raw_SVI(a,b,rho,m,sigma,k):
 	res = a+b*(rho*(k-m)+np.sqrt((k-m)**2+sigma**2))
 	if res <0:
-		#print(res, a+b*sigma*np.sqrt(1-rho*rho))
 		return 1e-8
 	return res
 	
@@ -68,12 +64,10 @@ class Stock_calibrate_LV:
 		df_m = pd.read_csv(os.path.join("data","StockCall_midterm.csv"),index_col=0)
 		df_l = pd.read_csv(os.path.join("data","StockCall_longterm.csv"),index_col=0)
 		df_all = pd.concat([df_s, df_m, df_l], axis=1)
-		#df_all = pd.concat([df_s, df_m], axis=1)
 
 		df_all = df_all.loc[df_all.index >=2500]
 		df_all = df_all.loc[df_all.index<=3500 ]
 		df_all.columns = df_all.columns.astype(int)
-		#df_all = df_all.loc[:,df_all.columns <= 3*365]
 	
 		df_Yield = pd.read_csv(os.path.join("data","GERYield.csv"),
 					header = None, delimiter = "\t", index_col=0)
@@ -105,7 +99,6 @@ class Stock_calibrate_LV:
 		SVI = {}
 		
 		for _T in self.df_impliedvols.columns:
-			#print("\n",_T)
 			T = _T/365.0
 			tmp_dict = {}
 			PT = self.EUR_bond_price(T)
@@ -114,33 +107,17 @@ class Stock_calibrate_LV:
 			K = np.array(df_impvol.index)
 			implied_vol = np.array(df_impvol)
 			k = np.log(K/FT)
-			#N = len(implied_vol)
-			#print(df_impvol)
 			raw_SVI_initial = [0.001, 0.2, 0.03, -0.2, 0.1]
 			fun = lambda x: impvol_Error(x, k, implied_vol, FT,PT,T)
 			bnds = ((None, None), (0, None), (-1,1), (None,None),(0,None))
 			cons = ({'type': 'ineq', 'fun': lambda x:  x[0]+x[1]*x[4]*np.sqrt(1-x[2]**2)})
 			res = minimize(fun, raw_SVI_initial, method='SLSQP', bounds=bnds,  constraints=cons)
-			#print(res.success)			
 			tmp_dict['a'] = res.x[0]
 			tmp_dict['b'] = res.x[1]
 			tmp_dict['rho'] = res.x[2]
 			tmp_dict['m'] = res.x[3]
 			tmp_dict['sigma'] = res.x[4]
 			SVI[_T] = tmp_dict
-			#tot_vol = []
-			#imp_vol = []
-			#for KK in np.linspace(2000,4000,21):
-				
-				#kk = np.log(KK/FT)
-				#w = raw_SVI(res.x[0],res.x[1],res.x[2],res.x[3],res.x[4],kk)
-				#tot_vol.append(w)
-				#imp_vol.append(np.sqrt(w/T))
-			#print(T*365.0, tot_vol, imp_vol)
-			#plt.plot(np.linspace(2000,4000,21), tot_vol, label="T="+str(_T) + "days")
-		#plt.legend()
-		#plt.title("implied tot var of different T")
-		#plt.show()
 		self.SVI_df = pd.DataFrame(SVI)
 		
 	def SVI_imp_vol(self,K,T):
@@ -151,16 +128,12 @@ class Stock_calibrate_LV:
 		_i = np.searchsorted(T_arr_indays,T_indays)
 		if _i == 0 or _i == len(T_arr_indays):
 			if _i == 0:
-				#T1 = T_arr_indays[_i]/365.0
 				param = self.SVI_df.loc[:,T_arr_indays[0]]
 
 			else:
-				#T1 = T_arr_indays[-1]/365.0
 				param = self.SVI_df.loc[:,T_arr_indays[-1]]
 
-			#FT1 = self.stock_forward_price(T1)
 			a,b,rho,m,sigma = list(param)
-			#k = np.log(K/FT)
 			imp_tot_var = raw_SVI(a,b,rho,m,sigma,k)
 			imp_vol = np.sqrt(imp_tot_var/T)
 			return imp_vol
@@ -181,17 +154,11 @@ class Stock_calibrate_LV:
 			sigma2 = param2['sigma']
 			T1 = T1/365.0
 			T2 = T2/365.0
-			#FT1 = self.stock_forward_price(T1)
-			#FT2 = self.stock_forward_price(T2)
 
-			#k1 = np.log(K/FT1)
-			#k2 = np.log(K/FT2)
 			imp_tot_var1 = raw_SVI(a1,b1,rho1,m1,sigma1,k)
 			imp_tot_var2 = raw_SVI(a2,b2,rho2,m2,sigma2,k)
 			imp_tot_var = (imp_tot_var2 - imp_tot_var1)/(T2-T1)*(T-T1)+imp_tot_var1
 			imp_vol = np.sqrt(imp_tot_var/T)
-			#PT = self.EUR_bond_price(T)
-			#return BS(imp_vol,FT,K,PT,T)
 			return imp_vol
 	def local_vol(self, K, T, r):
 		"""
@@ -222,26 +189,31 @@ class Stock_calibrate_LV:
 			return 0.7
 
 
-if __name__ == "__main__":
-	sc = Stock_calibrate_LV()
-	#df = sc.df_all
-	#print(sc.local_vol(4000,0.6))
-	
-	NK= 20
-	NT =10
-	X = np.linspace(2500,4000,NK)
-	Y = np.linspace(0.1,2,NT)
-	XX,YY = np.meshgrid(X,Y)
-	Z = np.zeros((NK,NT))
-	for j in range(0,NT):
-		for i in range(0,NK):
-			Z[i,j] = sc.local_vol(X[i],Y[j], -0.00)
-
-
-	fig = plt.figure()
-	ax = plt.axes(projection='3d')
-	ax.contour3D(XX, YY, Z.T, 50, cmap='binary')
-	plt.show()
-	
-	print(Z.mean())
-
+#==============================================================================
+# import math
+# from mpl_toolkits.mplot3d import Axes3D
+# if __name__ == "__main__":
+# 	sc = Stock_calibrate_LV()
+# 	#df = sc.df_all
+# 	#print(sc.local_vol(4000,0.6))
+# 	
+# 	NK= 20
+# 	NT =10
+# 	X = np.linspace(2500,4000,NK)
+# 	Y = np.linspace(0.1,2,NT)
+# 	XX,YY = np.meshgrid(X,Y)
+# 	Z = np.zeros((NK,NT))
+# 	for j in range(0,NT):
+# 		for i in range(0,NK):
+# 			Z[i,j] = sc.local_vol(X[i],Y[j], -0.00)
+# 
+# 
+# 	fig = plt.figure()
+# 	ax = plt.axes(projection='3d')
+# 	ax.contour3D(XX, YY, Z.T, 50, cmap='binary')
+# 	plt.show()
+# 	
+# 	print(Z.mean())
+# 
+# 
+#==============================================================================

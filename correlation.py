@@ -42,7 +42,7 @@ class Correlation_calibrate:
 		var_Stock_daily = cov_mat.loc['Stock_log_ret','Stock_log_ret']
 		var_ShortRate_daily = cov_mat.loc['ON_diff','ON_diff']
 		cov_FX_Stock = cov_mat.loc['FX_log_ret','Stock_log_ret']
-		cov_FX_ShortRate = cov_mat.loc['FX_log_ret','ON_diff']
+		#cov_FX_ShortRate = cov_mat.loc['FX_log_ret','ON_diff']
 		cov_Stock_ShortRate = cov_mat.loc['Stock_log_ret','ON_diff']
 		
 		
@@ -51,18 +51,18 @@ class Correlation_calibrate:
 		sig_ShortRate_daily = np.sqrt(var_ShortRate_daily)
 		
 		cor_FX_Stock = cov_FX_Stock / (sig_Stock_daily*sig_FX_daily)
-		cor_FX_ShortRate = cov_FX_ShortRate / (sig_ShortRate_daily*sig_FX_daily)
+		#cor_FX_ShortRate = cov_FX_ShortRate / (sig_ShortRate_daily*sig_FX_daily)
 		cor_Stock_ShortRate = cov_Stock_ShortRate / (sig_ShortRate_daily*sig_Stock_daily)
 		
 		sig_FX_yearly = sig_FX_daily * np.sqrt(252)
-		sig_Stock_yearly = sig_Stock_daily * np.sqrt(252)
-		sig_ShortRate_yearly = sig_ShortRate_daily * np.sqrt(252)
+		#sig_Stock_yearly = sig_Stock_daily * np.sqrt(252)
+		#sig_ShortRate_yearly = sig_ShortRate_daily * np.sqrt(252)
 		
 		print("FX annual vol:", sig_FX_yearly)
-		print("Stock annual vol:", sig_Stock_yearly)
-		print("Short Rate annual vol:", sig_ShortRate_yearly)
+		#print("Stock annual vol:", sig_Stock_yearly)
+		#print("Short Rate annual vol:", sig_ShortRate_yearly)
 		print("cor FX Stock:", cor_FX_Stock)
-		print("cor FX ShortRate:", cor_FX_ShortRate)
+		#print("cor FX ShortRate:", cor_FX_ShortRate)
 		print("cor ShortRate Stock:", cor_Stock_ShortRate)
 		
 		self.rho_XS = cor_FX_Stock

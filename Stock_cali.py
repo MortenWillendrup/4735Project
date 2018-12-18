@@ -5,7 +5,6 @@ Created on Wed Nov 28 19:24:54 2018
 @author: andy
 """
 
-#from BS_impvol import optimal_impvol_naiveloop
 import pandas as pd
 from scipy import interpolate
 import numpy as np
@@ -37,17 +36,10 @@ class Stock_calibrate:
 		div_str = df_stock_stats.loc['div'].squeeze()
 		self.q = float(div_str.strip("%"))/100
 		df_s = pd.read_csv(os.path.join("data","StockCall_shortterm.csv"),index_col=0)
-		#df_s.dropna(inplace = True)
 		df_m = pd.read_csv(os.path.join("data","StockCall_midterm.csv"),index_col=0)
-		#df_m.dropna(inplace = True)
 		df_l = pd.read_csv(os.path.join("data","StockCall_longterm.csv"),index_col=0)
-		#df_l.dropna(inplace = True)
 		
 		# Drop deep ITM options data which have little liquidity
-		#df_s_trunc = df_s[13:]
-		#df_m_trunc = df_m[17:]
-		#df_l_trunc = df_l[11:]
-		#self.df_all = pd.concat([df_s_trunc, df_m_trunc,df_l_trunc], axis=1)
 		self.df_all = pd.concat([df_s, df_m,df_l], axis=1)
 		self.df_all = self.df_all.loc[self.df_all.index >=2500]
 		self.df_all = self.df_all.loc[self.df_all.index<=3500 ]
@@ -57,12 +49,9 @@ class Stock_calibrate:
 		T = np.array(df_Yield.index)
 		yields = np.array(df_Yield.loc[:,1])
 		self.yields_interp = interpolate.interp1d(T.squeeze(), yields, 'cubic', fill_value='extrapolate')
-		#self.sigma = optimal_impvol_naiveloop()
 		
 		T_indays = self.df_all.columns.astype(float)
 		self.T_inyears = T_indays/365.0
-		#vec_Euro_bond_price = np.vectorize(self.Euro_bond_price)
-		#self.P = vec_Euro_bond_price(T_inyears)
 		
 		self.observed_prices = np.array(self.df_all)
 		res = minimize(lambda x: self.fit_MSE(x),0.2,method='BFGS', tol=1.0)
@@ -70,7 +59,6 @@ class Stock_calibrate:
 		def BS_impvol(s,t,r):
 			return res.x[0]
 		self.sigma = BS_impvol
-		#print(res)
 		
 	def get_fitted_call_price(self,sig):
 		fitted_prices = np.zeros(self.observed_prices.shape)
@@ -93,6 +81,3 @@ class Stock_calibrate:
 		return price
 
 
-
-if __name__ == "__main__":
-	clb = Stock_calibrate()

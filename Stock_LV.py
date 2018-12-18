@@ -5,11 +5,8 @@ Created on Fri Nov  9 11:29:55 2018
 @author: andy
 """
 
-import numpy as np
-from scipy.interpolate import interp1d, interp2d
+
 from Stock_cali_LV import Stock_calibrate_LV
-import math
-import matplotlib.pyplot as plt
 
 
 def Stock_drift_calibrate_LV(div, rho_XS, vol_arg_Stock, vol_FX):
@@ -42,6 +39,10 @@ def Stock_vol_calibrate_LV():
 	return  vol_args
 	
 #==============================================================================
+# import math
+# import matplotlib.pyplot as plt
+# import numpy as np
+# from scipy.interpolate import interp1d, interp2d
 # if __name__ == "__main__":
 # 	r_euro = -0.37/100
 # 	div = 0.0269
