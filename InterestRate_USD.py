@@ -6,7 +6,7 @@ Created on Fri Nov  9 11:29:55 2018
 """
 
 
-from USD_shortrate_cali import HoLee_calibrate, HullWhite_calibrate
+from USD_shortrate_calibrate import HoLee_calibrate, HullWhite_calibrate
 
 # Ho-Lee
 def Ho_Lee_USD(use_caplets):

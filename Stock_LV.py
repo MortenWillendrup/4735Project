@@ -6,7 +6,7 @@ Created on Fri Nov  9 11:29:55 2018
 """
 
 
-from Stock_cali_LV import Stock_calibrate_LV
+from Stock_LV_calibrate import Stock_calibrate_LV
 
 
 def Stock_drift_calibrate_LV(div, rho_XS, vol_arg_Stock, vol_FX):

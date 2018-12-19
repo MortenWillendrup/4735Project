@@ -6,7 +6,7 @@ Created on Fri Nov  9 11:29:55 2018
 """
 
 
-from Stock_cali import Stock_calibrate
+from Stock_BS_calibrate import Stock_calibrate_BS
 
 
 def Stock_drift_calibrate_BS(div, rho_XS, vol_arg_Stock, vol_FX):
@@ -33,7 +33,7 @@ def Stock_vol_calibrate_BS():
 	"""
 	Returns a dictionary with key:'sigma', value = func(S_t, t, r_t(euro))
 	"""
-	sc = Stock_calibrate()
+	sc = Stock_calibrate_BS()
 	sigma = sc.sigma
 	vol_args['sigma'] = sigma
 	return  vol_args

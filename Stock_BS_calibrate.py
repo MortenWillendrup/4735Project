@@ -20,7 +20,7 @@ def bs_price(s, k, p, T, q, sigma):
 	price = p * (F * stats.norm.cdf(d1) - k *  stats.norm.cdf(d2))
 	return price
 				
-class Stock_calibrate:
+class Stock_calibrate_BS:
 	"""
 	BS model calibration, assuming deterministic short rates and constant dividend
 	"""

@@ -1,25 +1,25 @@
 Python files:
 	1. Main.py 
 		the main function. runs monte carlo.
-	2. correlation.py
+	2. correlation_calibrate.py
 		estimates the correlations (between FX and stock, and between stock and short rates), and FX vol
 	3. derivative.py
 		helper functions that calculate numerical differentiation of interpolated or parametric functions
-	4.  EUR_shortrate_cali.py
+	4. EUR_shortrate_calibarte.py
 		calibrates parameters or Euro short rate models
 	5. InterestRate_EUR.py
 		some helper functions for simulating ho-lee and hull-white models for EUR short rates
-	6. USD_shortrate_cali.py
+	6. USD_shortrate_calibrate.py
 		calibrates parameters or USD short rate models
 	7. InterestRate_USD.py
 		some helper functions for simulating ho-lee and hull-white models for USD short rates
-	8. Stock_cali.py 
-		calibrates parameters for log normal model
+	8. Stock_BS_calibrate.py 
+		calibrates parameters for log normal model (BS, Black Scholes)
 	9. Stock_BS.py 
 		some helper functions for simulating stock prices under log normal (black scholes)
-	10. Stock_cali_LV.py (very slow)
+	10. Stock_LV_calibrate.py (very slow)
 		calibrates parameters for local vol model using SVI
-	11. Stock_LV.py (not recommended)
+	11. Stock_LV.py
 		some helper functions for simulating stock prices under Local vol
 
 

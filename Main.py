@@ -17,7 +17,7 @@ from InterestRate_EUR import Ho_Lee_EUR, Hull_White_EUR
 from Stock_LV import Stock_drift_calibrate_LV, Stock_vol_calibrate_LV
 from Stock_BS import Stock_drift_calibrate_BS, Stock_vol_calibrate_BS
 
-from correlation import Correlation_calibrate
+from correlation_calibrate import Correlation_calibrate
 
 def Ho_Lee_drift(drift_arg):
 	"""

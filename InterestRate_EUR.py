@@ -5,7 +5,7 @@ Created on Fri Nov  9 11:29:55 2018
 @author: andy
 """
 
-from EUR_shortrate_cali import HoLee_calibrate_EUR, HullWhite_calibrate_EUR
+from EUR_shortrate_calibrate import HoLee_calibrate_EUR, HullWhite_calibrate_EUR
 
 # Ho-Lee
 def Ho_Lee_EUR():
